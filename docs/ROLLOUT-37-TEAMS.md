@@ -5,7 +5,31 @@
 
 ---
 
-## 0. หลักคิดของแผนนี้
+## 0. สถานะจริงของ org ณ วันที่เขียน (สำรวจแล้ว)
+
+ก่อนอ่านแผน ต้องรู้ก่อนว่า **โครงสร้างส่วนกลางถูกวางไว้แล้ว** และแผนนี้ต่อยอดจากของเดิม ไม่ใช่เริ่มใหม่
+
+| repo | มีอะไรแล้ว | ยังขาดอะไร |
+|---|---|---|
+| `csmju2030-standards` | ✅ เอกสาร 7 ฉบับ · `ci-compliance-spec.md` (35 กฎ) · `scripts/*.sh` 18 ตัว · reusable workflow 8 job · `templates/` · `org-settings/` ruleset · `new-subsystem.sh` · `VERSION` = **1.3.0** | ยังไม่มี check ฝั่ง design system (มีแค่ `check-ui-tokens.sh` ที่เป็น grep หา hex) |
+| `design-system` | ⬅️ **งานนี้** — package + component + lint + template | ยัง publish ไม่ได้ (ดูข้อ 7) |
+| `csmju-equipment` | ✅ โครง repo ครบ (`frontend/` `backend/` `standards/` submodule `pnpm-workspace.yaml` `subsystem.yaml` CI 6 บรรทัด) | `frontend/src/` ยังว่าง (มีแค่ `.gitkeep`) |
+| `CSMJU2030-BE-Core_Hub` | ✅ โครงเดียวกับ subsystem | `frontend/src/` ยังว่างเช่นกัน |
+
+**ข้อสรุปสำคัญ 3 ข้อ**
+
+1. **ระบบบังคับกฎมีแล้วและ "แตะไม่ได้"** — `.github/workflows/ci.yml` ของทุกระบบย่อยยาว 6 บรรทัด
+   เรียก reusable workflow ที่ pin ด้วย `@v1.3.0` และ GH-03 ห้ามระบบย่อยแก้ไฟล์นี้
+   👉 **คุณเพิ่ม CI ให้ 37 repo เองไม่ได้** ต้องเพิ่ม script เข้า `csmju2030-standards` แล้ว bump tag
+2. **stack จริงคือ pnpm workspace + `frontend/`/`backend/` + Tailwind v3** — ไม่ใช่ `web/`/`api/` + npm ตามที่ `ui-design-system.md` §16.1 เขียนไว้
+   `allowed-deps.json` ไม่มี `@tailwindcss/postcss` ด้วย → Tailwind v4 จะโดน ARC-02 ตีตก
+   👉 template และเอกสารในงานนี้ปรับให้ตรง **ของจริง** แล้ว และควรแก้ §16.1 ของเอกสารมาตรฐานให้ตรงกันด้วย
+3. **`@csmju2030/design-system` อยู่ใน `allowed_frontend` แล้ว** — ระบบย่อยติดตั้งได้ทันทีที่ publish เสร็จ
+   (`lucide-react` / `clsx` / `@fontsource/*` เป็น dependency ภายในของ package จึงไม่ถูก ARC-02 ตรวจ)
+
+---
+
+## 0.1 หลักคิดของแผนนี้
 
 ปัญหาไม่ใช่ "37 คนไม่รู้มาตรฐาน" — เอกสารมี 1,300 บรรทัดและไม่มีใครอ่านจบทุกครั้งที่เขียนหน้าจอ
 ปัญหาคือ **มาตรฐานที่ต้องอาศัยความจำและวินัยของคน 37 คน จะพังภายในสัปดาห์ที่สาม**
@@ -16,7 +40,7 @@
 |---|---|---|
 | **1. Package** | สี ฟอนต์ ระยะห่าง component พฤติกรรม | ทำผิดไม่ได้เพราะไม่มีทางเลือกให้ทำผิด — `<Button>` มีแค่ 5 variant |
 | **2. TypeScript** | 4 สถานะหน้าจอ, `label` ของ IconButton, `disabledReason` | ไม่ส่ง = **คอมไพล์ไม่ผ่าน** ไม่ต้องรอ reviewer |
-| **3. CI (`csmju-ui-lint`)** | 25 ข้อห้ามจาก §16.2 | แดง = merge ไม่ได้ ไม่ต้องเถียงกันในคอมเมนต์ PR |
+| **3. CI** | compliance gate กลาง 35 กฎ (มีแล้ว) + `csmju-ui-lint` อีก 20 กฎฝั่งหน้าจอ | แดง = merge ไม่ได้ ไม่ต้องเถียงกันในคอมเมนต์ PR |
 | **4. Template + AI prompt** | โครงไฟล์ที่ถูกตั้งแต่ commit แรก | คนไม่เริ่มจากศูนย์ = ไม่มีโอกาสเริ่มผิด |
 
 **เอกสารเหลือหน้าที่เดียว: อธิบายว่า "ทำไม" เมื่อมีคนถาม** ไม่ใช่เป็นเครื่องมือบังคับ
@@ -27,8 +51,8 @@
 
 ### คุณเป็นเจ้าของ 🔴
 - `@csmju2030/design-system` — token, component, utility, การออกเวอร์ชัน
-- `csmju-ui-lint` — กฎที่ CI ตรวจ
-- `examples/subsystem-template` — โครงเริ่มต้นของฝั่ง web
+- `csmju-ui-lint` — กฎฝั่งหน้าจอ (`DS-01..20`) ที่ CI ตรวจ
+- `examples/subsystem-template/frontend` — โครงเริ่มต้นของฝั่ง frontend
 - `docs/ui-design-system.md` — มาตรฐานหน้าจอ
 - การตัดสินคำขอ component/token ใหม่ (§17.4, SLA 3 วันทำการ)
 
@@ -39,6 +63,7 @@
 | รูปแบบ envelope, error code, pagination | PM3 (`api-conventions.md`) | ยืนยันว่า `useApi()` แกะ envelope ตรง |
 | ชื่อฟิลด์, รูปแบบข้อมูลที่ส่ง | PM3 (`data-dictionary.md`) | ยืนยันว่า `formatDate/formatMoney` แปลงถูก |
 | Core hub, dashboard, การมอบสิทธิ์ระบบย่อย | ทีม core | ส่ง URL ของ Core มาให้ตั้งใน `NEXT_PUBLIC_CSMJU_CORE_URL` |
+| CI, branch protection, CODEOWNERS, ruleset, `new-subsystem.sh` | DevOps / เจ้าของ `csmju2030-standards` | ส่ง `check-ui-designsystem.sh` ให้เขา merge แล้ว bump tag |
 | business logic ของ 37 ระบบ | AIE แต่ละคน | ไม่ต้องยุ่ง |
 
 > 🔴 **ข้อตกลง 3 อย่างที่ต้องเคาะกับ PM2/PM3 ให้จบก่อนกระจายงาน** (ดูข้อ 6 — เป็นความเสี่ยงอันดับ 1 ของแผนนี้)
@@ -67,13 +92,16 @@ PM1 (คุณ) — design system
 
 ## 3. ไทม์ไลน์ 6 สัปดาห์
 
-### สัปดาห์ 0 — ก่อนเปิดตัว (คุณทำคนเดียว) ✅ เสร็จแล้ว
+### สัปดาห์ 0 — ก่อนเปิดตัว (คุณทำคนเดียว)
 - [x] `@csmju2030/design-system@1.2.0` — token + component 50 ตัว + utility
-- [x] `csmju-ui-lint` — 25 กฎ ตรวจจริง ทดสอบกับโปรเจกต์ที่ผิดแล้วจับได้ 18 ข้อ
-- [x] `examples/subsystem-template` — build ผ่าน + lint เขียว
-- [x] `templates/ui-compliance.yml` — CI ที่ระบบย่อยลอกไปใช้
+- [x] `csmju-ui-lint` — กฎ `DS-01..20` + ทวน `UI/SEC/ARC` ทดสอบแล้วจับได้ 21 error กับโปรเจกต์ที่ผิด และเขียวกับ template
+- [x] `examples/subsystem-template/frontend` — pnpm + Tailwind v3 + `frontend/` ผ่าน `build` `lint` `typecheck` `csmju-ui-lint` จริง
+- [x] `templates/check-ui-designsystem.sh` — script สำหรับต่อเข้า CI กลาง
 - [x] เอกสาร: QUICKSTART · COMPONENTS · AI-PROMPT
-- [ ] **publish package ขึ้น GitHub Packages** ← ทำทันทีหลัง merge (ดูข้อ 7)
+- [ ] 🔴 **ขอสิทธิ์ write บน `CSMJU2030/design-system`** — ตอนนี้บัญชีมีแค่สิทธิ์อ่าน จึง push ไม่ได้
+- [ ] **publish package ขึ้น GitHub Packages** (tag `v1.2.0` → workflow `release.yml` ทำให้เอง)
+- [ ] ส่ง PR เข้า `csmju2030-standards`: เพิ่ม `scripts/check-ui-designsystem.sh` + step ใน job `ui-token-compliance` + bump `VERSION` เป็น 1.4.0
+- [ ] เสนอแก้ `ui-design-system.md` §16.1 ให้เป็น `frontend/`+`backend/` + pnpm (ตอนนี้เขียน `web/`+`api/` ซึ่งไม่ตรงกับ `new-subsystem.sh`)
 - [ ] เคาะข้อตกลงกับ PM2/PM3 (ข้อ 6)
 
 ### สัปดาห์ 1 — อบรม PL 10 คน (ไม่ใช่ 37 คน)
@@ -90,10 +118,11 @@ PM1 (คุณ) — design system
 ### สัปดาห์ 2 — AIE ทุกคนตั้งโปรเจกต์ + ส่ง G0
 PL พาทีมทำพร้อมกันในนัดเดียว 2 ชั่วโมง:
 1. ตั้ง `~/.npmrc` + PAT (read:packages)
-2. `cp -r examples/subsystem-template  csmju-<ระบบ>/web`
-3. แก้ 5 จุดใน QUICKSTART ข้อ 2
-4. `npm run dev` เห็นหน้าแรกของตัวเอง
-5. commit + push + CI เขียว
+2. `git submodule update --init --remote standards/`
+3. `cp -r examples/subsystem-template/frontend/.  frontend/`
+4. แก้ 4 จุดใน QUICKSTART ข้อ 2
+5. `pnpm install && pnpm --filter frontend dev` เห็นหน้าแรกของตัวเอง
+6. commit ตาม Conventional Commits + push branch `feature/<subsystem>/<เรื่อง>` + CI เขียว
 
 **ส่ง G0 (Scoping):** รายการหน้าจอทั้งหมด + user flow หลัก + ใครเห็นอะไร (Layer 2 mapping)
 PL อนุมัติ
@@ -144,16 +173,23 @@ Lighthouse + axe + ภาพหน้าจอ 360/768/1280 → PL อนุม�
 ### 5.2 สคริปต์ตรวจข้ามทุก repo (รันสัปดาห์ละครั้ง)
 ```bash
 #!/usr/bin/env bash
-# ต้องมี gh CLI และสิทธิ์อ่าน repo ของ org
+# ต้องมี gh CLI + node และสิทธิ์อ่าน repo ของ org
+set -euo pipefail
 mkdir -p /tmp/csmju-audit && cd /tmp/csmju-audit
-gh repo list CSMJU2030 --limit 100 --json name -q '.[].name' \
-  | grep '^csmju-' | while read -r repo; do
-      [ -d "$repo" ] || gh repo clone "CSMJU2030/$repo" -- --depth 1 -q
-      ( cd "$repo" && git pull -q 2>/dev/null
-        echo "{\"repo\":\"$repo\",$(npx --yes @csmju2030/design-system csmju-ui-lint --json \
-          | python3 -c 'import sys,json;d=json.load(sys.stdin);print(f"\"errors\":{d[chr(34)+"errors"+chr(34)]},\"warnings\":{d[chr(34)+"warnings"+chr(34)]}")')}"
-      )
-    done | tee audit.jsonl
+
+gh repo list CSMJU2030 --limit 100 --json name -q '.[].name' | grep '^csmju-' | while read -r repo; do
+  [ -d "$repo" ] || gh repo clone "CSMJU2030/$repo" -- --depth 1 -q
+  ( cd "$repo" && git pull -q 2>/dev/null || true
+    RESULT=$(npx --yes @csmju2030/design-system csmju-ui-lint --json 2>/dev/null || echo '{}')
+    node -e "
+      const r = JSON.parse(process.argv[1] || '{}');
+      console.log(JSON.stringify({ repo: process.argv[2], errors: r.errors ?? null, warnings: r.warnings ?? null }));
+    " "$RESULT" "$repo"
+  )
+done | tee audit.jsonl
+
+# จัดอันดับ repo ที่ error เยอะสุด
+sort -t: -k2 -rn audit.jsonl | head -10
 ```
 เอา `audit.jsonl` มาทำตารางจัดอันดับ แล้วส่งให้ PL ดูเฉพาะทีมตัวเอง
 
@@ -177,8 +213,10 @@ gh repo list CSMJU2030 --limit 100 --json name -q '.[].name' \
 
 ## 7. เช็กลิสต์ของคุณ 7 วันข้างหน้า
 
-- [ ] **publish package** — สร้าง release tag `v1.2.0` → GitHub Actions จะ publish ขึ้น GitHub Packages ให้เอง
-- [ ] ทดสอบ `npm install @csmju2030/design-system` จากเครื่องอื่นที่ไม่ใช่เครื่องคุณ (เพื่อยืนยันว่า PAT + registry ใช้ได้จริง)
+- [ ] 🔴 **ขอสิทธิ์ write บน `CSMJU2030/design-system`** — ต้องทำก่อนทุกข้อ ตอนนี้ push ไม่ได้
+- [ ] **publish package** — สร้าง release tag `v1.2.0` → workflow `release.yml` publish ขึ้น GitHub Packages ให้เอง
+- [ ] ทดสอบ `pnpm add @csmju2030/design-system` จากเครื่องอื่นที่ไม่ใช่เครื่องคุณ (ยืนยันว่า PAT + registry ใช้ได้จริง)
+- [ ] ส่ง PR เข้า `csmju2030-standards` (script + step + bump VERSION) — ถ้าไม่ทำข้อนี้ `DS-xx` จะเป็นแค่เครื่องมือที่ AIE ต้องรันเอง ไม่ใช่กฎที่บังคับได้
 - [ ] เคาะ 3 ข้อตกลงในความเสี่ยงข้อ 1 กับ PM2/PM3 — **ข้อนี้สำคัญที่สุด**
 - [ ] ตั้งช่องทางสื่อสาร 5 ช่องในข้อ 4
 - [ ] นัดอบรม PL 10 คน (90 นาที) พร้อมส่ง QUICKSTART ให้อ่านล่วงหน้า

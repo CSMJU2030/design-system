@@ -41,6 +41,13 @@ Next.js ฝั่งหน้าเว็บห้ามต่อ PostgreSQL โ
 13. ห้ามใส่ความลับใดๆ ในตัวแปรที่ขึ้นต้นด้วย NEXT_PUBLIC_
 14. ห้าม cache หน้าที่มีข้อมูลส่วนบุคคล ใช้ export const dynamic = "force-dynamic"
 15. ห้ามสร้าง component ที่ design system มีอยู่แล้ว (ดูรายการด้านล่าง) และห้ามสร้างโฟลเดอร์ components/ui/
+16. ใช้ pnpm เท่านั้น ห้ามสั่ง npm install / yarn (CI ตีตกที่ QA-05 ถ้าเจอ package-lock.json)
+17. โค้ดหน้าเว็บอยู่ที่ frontend/src/ (ไม่ใช่ web/ หรือ src/ ที่ราก) และ backend อยู่ที่ backend/src/
+18. Tailwind เป็นเวอร์ชัน 3 ใช้ผ่าน preset: presets: [csmjuPreset] ห้ามใช้ @tailwindcss/postcss (v4)
+    เพราะไม่อยู่ใน dependency whitelist ของโครงการ
+19. ห้ามเพิ่ม dependency นอก whitelist: next, react, react-dom, typescript, tailwindcss, postcss,
+    autoprefixer, @csmju2030/design-system, zustand, axios, @tanstack/react-query, zod,
+    openapi-typescript, eslint, prettier, vitest, @testing-library/react
 
 Component ที่ต้องใช้ (มีอยู่แล้ว ห้ามเขียนเอง):
 - Layout: CsmjuAppShell, Container, Stack, Section, PageHeader, Card, Grid, Divider, Breadcrumb
@@ -164,17 +171,18 @@ Accessibility (บังคับ):
 14. ข้อความปุ่มใช้คำมาตรฐานหรือไม่ (บันทึก/ยกเลิก/ลบ/แก้ไข/เพิ่ม...)
 15. มี next/font/google, ความลับใน NEXT_PUBLIC_*, หรือการต่อ PostgreSQL จากฝั่ง Next.js หรือไม่
 16. ที่ 360px มี horizontal scroll หรือไม่
+17. มี dependency นอก whitelist หรือ lockfile ที่ไม่ใช่ pnpm หรือไม่
 
 จากนั้นแก้ทุกข้อที่ไม่ผ่าน แล้วส่งโค้ดฉบับแก้แล้วกลับมา
 ```
 
-จากนั้นรัน `npx csmju-ui-lint` จริง — ตัวตรวจอัตโนมัติจับได้ 25 กฎ และไม่หลอกตัวเองเหมือนตอนให้ AI ตรวจงานตัวเอง
+จากนั้นรัน `pnpm --filter frontend lint:ui` จริง — ตัวตรวจอัตโนมัติจับได้ 25 กฎ และไม่หลอกตัวเองเหมือนตอนให้ AI ตรวจงานตัวเอง
 
 ---
 
 ## 4. สิ่งที่ AI ทำแทนไม่ได้
 
-1. **ดึงมาตรฐานล่าสุดก่อนเริ่มงานทุกครั้ง** — `npm update @csmju2030/design-system` (AI ไม่รู้ว่ามาตรฐานเพิ่งเปลี่ยน)
+1. **ดึงมาตรฐานล่าสุดก่อนเริ่มงานทุกครั้ง** — `git submodule update --remote standards/` และ `pnpm update @csmju2030/design-system` (AI ไม่รู้ว่ามาตรฐานเพิ่งเปลี่ยน)
 2. **ทดสอบบนเครื่องจริง** — Android + iPhone/iPad อย่างน้อยอย่างละ 1 เครื่อง
 3. **ทดสอบด้วยคีย์บอร์ดจริง** — กด Tab ไล่ทั้งหน้า
 4. **ตรวจข้อความไทยด้วยตาตัวเอง** — AI มักสร้างประโยคไทยที่ถูกไวยากรณ์แต่ไม่ใช่ภาษาที่คนใช้จริงในบริบทมหาวิทยาลัย

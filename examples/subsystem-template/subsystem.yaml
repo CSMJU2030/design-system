@@ -1,15 +1,22 @@
 name: csmju-equipment
+standards_version: "1.3.0"
+
+public_endpoints:
+  - GET /health
+
+owners:
+  pl: "@csmju2030/pl-equipment"
+  aie: "@csmju2030/aie-equipment"
+
 display_name: "ระบบครุภัณฑ์"
-owner: 6xxxxxxxx-somchai
-standards_version: "1.2.0"
-stack:
-  frontend: "next@15"
-  backend: "nest@11"
-  database: "postgresql@16"
+repo: github.com/CSMJU2030/csmju-equipment
+status: proposed
+
+# ---- ส่วนที่เกี่ยวกับหน้าจอ (ui-design-system.md §19.2) ----
 ui:
-  design_system_version: "1.2.0"
-  theme: light
+  design_system_version: "1.2.0"   # เวอร์ชัน @csmju2030/design-system ที่ใช้จริง
+  theme: light                     # light | light+dark
   nav:
     - { label: "ภาพรวม", path: "/" }
     - { label: "รายการครุภัณฑ์", path: "/equipment-items" }
-  local_components: []
+  local_components: []             # component ที่ได้รับอนุมัติให้ทำเอง พร้อมเลข issue

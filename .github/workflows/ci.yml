@@ -25,13 +25,25 @@ jobs:
 
       # ยืนยันว่า package ใช้ได้จริงใน Next.js App Router ไม่ใช่แค่ build ผ่าน
       # (เคยเจอบั๊กที่ "use client" หายตอน bundle แล้ว next build พังตอน collect page data)
-      - name: integration — build ตัวอย่างระบบย่อยจริง
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: integration — build ตัวอย่างระบบย่อยจริง (pnpm + Tailwind v3 + frontend/)
         run: |
           npm pack --pack-destination /tmp
-          cd examples/subsystem-template
-          # ติดตั้งจาก tarball ที่เพิ่ง pack ตรงๆ เพื่อไม่ต้องพึ่ง registry ที่ยังไม่มีเวอร์ชันนี้
-          npm install --no-audit --no-fund /tmp/csmju2030-design-system-*.tgz
-          npx next build
+          cd examples/subsystem-template/frontend
+          export TGZ=$(ls /tmp/csmju2030-design-system-*.tgz)
+          node -e "
+            const fs=require('fs'); const p='package.json';
+            const d=JSON.parse(fs.readFileSync(p,'utf8'));
+            d.dependencies['@csmju2030/design-system']='file:'+process.env.TGZ;
+            fs.writeFileSync(p, JSON.stringify(d,null,2));
+          "
+          pnpm install --no-frozen-lockfile
+          pnpm run build
+          pnpm run lint
+          pnpm run typecheck
         env:
           NEXT_PUBLIC_CSMJU_CORE_URL: https://core.csmju2030.ac.th
           NEXT_PUBLIC_API_BASE_URL: https://api.csmju2030.ac.th

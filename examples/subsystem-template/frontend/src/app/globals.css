@@ -1,0 +1,26 @@
+/*
+ * 🔴 ไฟล์นี้ต้องมีแค่ import ของ design system เท่านั้น (§16.1)
+ *    ห้ามประกาศสี ระยะห่าง หรือฟอนต์เพิ่มเอง — CI (UI-01/UI-02) จะตีตก
+ *
+ * @import ต้องอยู่บนสุดของไฟล์เสมอตามข้อกำหนดของ CSS
+ */
+@import "@csmju2030/design-system/styles.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * preflight ของ Tailwind ถูกแทรกหลัง base ของ design system
+ * จึงต้องยืนยันกฎ typography ภาษาไทย (§4.3) อีกครั้ง ไม่งั้น line-height จะกลับไปเป็นค่าของ Tailwind
+ * ทุกค่าที่นี่อ้าง token ทั้งหมด ไม่มีตัวเลขดิบ
+ */
+@layer base {
+  body {
+    background-color: var(--csmju-color-canvas);
+    color: var(--csmju-color-text-body);
+    font-family: var(--csmju-font-body);
+    font-size: var(--csmju-text-body);
+    line-height: var(--csmju-text-body-lh);
+  }
+}

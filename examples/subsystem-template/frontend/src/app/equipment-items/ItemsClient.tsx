@@ -8,6 +8,17 @@ import { Pencil, Trash2 } from "@csmju2030/design-system/icons";
 
 interface Item { id: string; asset_code: string; name: string; status: string; price_satang: number; acquired_at: string; }
 
+/**
+ * แปลงค่า status จาก API เป็นคำไทย + สีมาตรฐาน
+ * 🔴 ห้ามให้แต่ละหน้าคิดคำเรียกเอง ไม่งั้น 37 ระบบจะเรียกสถานะเดียวกันคนละคำ
+ */
+const STATUS: Record<string, { tone: "success" | "warning" | "danger" | "neutral"; label: string }> = {
+  available: { tone: "success", label: "พร้อมให้ยืม" },
+  borrowed: { tone: "warning", label: "ถูกยืมอยู่" },
+  overdue: { tone: "danger", label: "เกินกำหนดคืน" },
+  retired: { tone: "neutral", label: "จำหน่ายออกแล้ว" },
+};
+
 const rows: Item[] = [
   { id: "1", asset_code: "CS-PRJ-001", name: "โปรเจกเตอร์ EPSON EB-2250U", status: "available", price_satang: 4850000, acquired_at: "2026-08-11" },
 ];
@@ -37,7 +48,7 @@ export function ItemsClient() {
         columns={[
           { key: "asset_code", header: "รหัสครุภัณฑ์", sortable: true, render: (r) => r.asset_code },
           { key: "name", header: "ชื่อ", render: (r) => r.name },
-          { key: "status", header: "สถานะ", render: (r) => <StatusDot tone="success">พร้อมให้ยืม</StatusDot> },
+          { key: "status", header: "สถานะ", render: (r) => <StatusDot tone={STATUS[r.status].tone}>{STATUS[r.status].label}</StatusDot> },
           { key: "price_satang", header: "ราคา", align: "numeric", render: (r) => formatMoney(r.price_satang) },
           { key: "acquired_at", header: "วันที่ได้มา", align: "numeric", hideOnMobile: true, render: (r) => formatDate(r.acquired_at) },
         ]}

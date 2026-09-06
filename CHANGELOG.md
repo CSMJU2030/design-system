@@ -47,9 +47,26 @@
 - 401 จัดการที่ AppShell ที่เดียว: refresh → retry 1 ครั้ง → redirect ไป Core
 
 ### เครื่องมือ
-- **`csmju-ui-lint`** — 25 กฎจาก §16.2 · §17.2 · §18.2 พร้อม `--json` สำหรับ CI
-- `examples/subsystem-template` — โครง Next.js ที่ build ผ่านและ lint เขียว
-- `templates/ui-compliance.yml` — CI ที่ระบบย่อยคัดลอกไปใช้ได้เลย
+- **`csmju-ui-lint`** — กฎ `DS-01..20` (สิ่งที่ grep ทำไม่ได้: โครง route segment, AppShell, aria-label, disabledReason, การ fork component)
+  พร้อมทวนซ้ำ `UI-01..04` / `SEC-03` / `SEC-05` / `ARC-01` / `ARC-03` ด้วย parser ที่แม่นกว่า grep
+  ระดับความรุนแรงตรงกับ `ci-compliance-spec.md §7.1` และเคารพ `.compliance-exceptions.yml` (รวมถึงวันหมดอายุ)
+  รองรับ `--json` สำหรับรวมผลข้าม repo
+- `examples/subsystem-template/frontend` — โครง Next.js ที่ผ่าน `pnpm build` · `lint` · `typecheck` · `csmju-ui-lint` จริง
+- `templates/check-ui-designsystem.sh` — script สำหรับต่อเข้า job `ui-token-compliance` ของ `csmju2030-standards`
+
+### ปรับให้ตรงกับโครงสร้างจริงของ org
+สำรวจ `csmju2030-standards` / `csmju-equipment` แล้วพบว่าของจริงต่างจาก `ui-design-system.md` §16.1 หลายจุด
+งานนี้ยึด **ของจริง** เป็นหลัก:
+
+| หัวข้อ | §16.1 เขียนไว้ | ของจริงใน org | งานนี้ยึดตาม |
+|---|---|---|---|
+| โฟลเดอร์ | `web/` + `api/` | `frontend/` + `backend/` | ของจริง |
+| package manager | ไม่ระบุ (ตัวอย่างใช้ npm) | **pnpm workspace** (QA-05 ตีตก `package-lock.json`) | ของจริง |
+| Tailwind | ไม่ระบุเวอร์ชัน | **v3** (`@tailwindcss/postcss` ไม่อยู่ใน `allowed-deps.json`) | ของจริง — ยังแถม `theme.css` ให้ v4 เผื่ออนาคต |
+| CI ของระบบย่อย | ให้คัดลอก workflow ไปวาง | reusable workflow ที่ pin tag และ **GH-03 ห้ามแก้** | ของจริง — เปลี่ยนเป็นส่งสคริปต์เข้าส่วนกลางแทน |
+| manifest | `subsystem.yaml` อย่างเดียว | `subsystem.yaml` + `.standards-version` ต้องตรงกัน | ของจริง — เพิ่มกฎ `DS-19` ตรวจให้ |
+
+👉 ควรแก้ `ui-design-system.md` §16.1 ให้ตรงกับของจริงในรอบถัดไป
 
 ### หมายเหตุทางเทคนิค
 - **build เป็น ESM อย่างเดียวและไม่ bundle** — เพราะ Next.js App Router ตัดขอบเขต Server/Client Component จาก directive `"use client"` ที่หัวไฟล์แต่ละไฟล์ ถ้ารวมเป็นก้อนเดียว `formatDate`/`csmjuTitle` จะกลายเป็น client reference แล้ว `next build` พังตอน collect page data

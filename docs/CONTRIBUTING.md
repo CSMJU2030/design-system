@@ -41,7 +41,7 @@ npm run build
 1. `src/components/<กลุ่ม>/<Name>.tsx` — พร้อม JSDoc ที่อ้างข้อในเอกสาร
 2. สไตล์ต่อท้าย `src/styles/components.css` ในส่วนของกลุ่มนั้น
 3. export ที่ `src/index.ts` (export type ด้วยเสมอ)
-4. ใช้งานจริงใน `examples/subsystem-template` อย่างน้อย 1 จุด
+4. ใช้งานจริงใน `examples/subsystem-template/frontend` อย่างน้อย 1 จุด (CI จะ build ตัวอย่างนี้จริง)
 5. เพิ่มในตาราง `docs/COMPONENTS.md` และในรายการ component ของ `docs/AI-PROMPT.md`
 6. `npm run typecheck && npm run build && npm run lint:self`
 7. อัปเดต `CHANGELOG.md`
@@ -55,8 +55,11 @@ npm run build
 
 แก้ที่ `tools/csmju-ui-lint.mjs`
 
-- กฎระดับบรรทัด → เพิ่มใน `CODE_RULES`
+- กฎระดับบรรทัด → เพิ่มใน `LINE_RULES`
 - กฎระดับโครงสร้าง → เพิ่มฟังก์ชันแล้วเรียกใน `lintProject()`
+- **รหัสกฎ:** ใช้ `DS-xx` สำหรับกฎใหม่ของ design system
+  ใช้รหัสของส่วนกลาง (`UI-01..04`, `SEC-`, `ARC-`, `DD-`) **เฉพาะเมื่อเป็นกฎเดียวกัน**
+  และต้องตั้งระดับความรุนแรงให้ตรงกับ `ci-compliance-spec.md §7.1` (เช่น `UI-02..04` เป็น warn ไม่ใช่ error)
 - **ทุกกฎต้องมี `hint` ที่บอกวิธีแก้และเลขข้อในเอกสาร** — ข้อความว่า "ผิดกฎ" เฉยๆ ทำให้คนแก้ไม่ถูก
 - **ทดสอบทั้ง 2 ทาง:** ต้องจับได้กับโค้ดที่ผิด และต้องไม่ฟ้องกับ `examples/subsystem-template`
 - กฎใหม่ที่จะทำให้ repo เดิมแดง → ปล่อยเป็น `SEV.WARN` ก่อน 1 minor แล้วค่อยยกเป็น `SEV.ERROR`
@@ -74,3 +77,15 @@ git tag v1.3.0 && git push origin v1.3.0     # GitHub Actions publish ให้�
 ```
 
 MAJOR ต้องประกาศล่วงหน้า ≥ 2 สัปดาห์ + migration guide + ของเดิม deprecated อย่างน้อย 1 minor cycle (§17.5)
+
+---
+
+## เพิ่มกฎเข้า CI ของส่วนกลาง
+
+`csmju-ui-lint` จะเป็น "กฎ" ได้ก็ต่อเมื่อถูกเรียกจาก CI ที่ระบบย่อยแก้ไม่ได้
+ระบบย่อยเพิ่ม workflow เองไม่ได้ (GH-03) จึงต้องส่ง PR เข้า `csmju2030-standards`:
+
+1. คัดลอก [`templates/check-ui-designsystem.sh`](../templates/check-ui-designsystem.sh) → `scripts/check-ui-designsystem.sh`
+2. เพิ่ม step ในจ็อบ `ui-token-compliance` ของ `.github/workflows/subsystem-compliance.yml`
+3. bump `VERSION` แล้ว tag ใหม่
+4. แจ้ง DevOps ให้ระบบย่อย bump `@vX.Y.Z` ใน `ci.yml` (ต้องผ่าน CODEOWNERS)

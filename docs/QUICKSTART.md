@@ -11,7 +11,7 @@
 `@csmju2030/design-system` อยู่บน GitHub Packages ของ org ไม่ใช่ npm สาธารณะ
 
 ```bash
-# ~/.npmrc
+# ~/.npmrc  (pnpm อ่านไฟล์นี้เหมือนกัน)
 @csmju2030:registry=https://npm.pkg.github.com
 //npm.pkg.github.com/:_authToken=<GitHub Personal Access Token ที่มีสิทธิ์ read:packages>
 ```
@@ -24,38 +24,46 @@
 ## 1. เริ่มโปรเจกต์
 
 **ห้ามเริ่มจาก `create-next-app` เปล่าๆ** — จะขาด config ที่ CI ตรวจ (§20.4 ข้อ 0)
+repo ระบบย่อยของคุณสร้างจาก `new-subsystem.sh` ของ `csmju2030-standards` แล้ว
+และมี `frontend/src/.gitkeep` ว่างรออยู่ — งานของคุณคือเติมฝั่ง frontend
 
 ```bash
 git clone https://github.com/CSMJU2030/design-system.git /tmp/ds
-mkdir -p csmju-<ชื่อระบบ>
-cp -r /tmp/ds/examples/subsystem-template  csmju-<ชื่อระบบ>/web
-cp /tmp/ds/templates/ui-compliance.yml     csmju-<ชื่อระบบ>/.github/workflows/
-cd csmju-<ชื่อระบบ>/web
+
+cd csmju-<ชื่อระบบ>
+git submodule update --init --remote standards/    # ดึงมาตรฐานล่าสุด
+cp -r /tmp/ds/examples/subsystem-template/frontend/.  frontend/
 cp .env.example .env.local
-npm install
-npm run dev
+
+pnpm install
+pnpm --filter frontend dev
 ```
 
-โครงที่ได้ (ตาม §16.1):
+> 🔴 **pnpm เท่านั้น** — QA-05 ตีตกทันทีถ้าเจอ `package-lock.json` หรือ `yarn.lock`
+
+โครงที่ได้:
 
 ```
 csmju-<ชื่อระบบ>/
 ├── subsystem.yaml              # 🔴 manifest
-├── .github/workflows/ui-compliance.yml
-├── web/                        # Next.js  ← โฟลเดอร์นี้
-└── api/                        # NestJS   ← ทำทีหลัง
+├── .standards-version          # 🔴 ต้องตรงกับ standards_version ใน subsystem.yaml
+├── pnpm-workspace.yaml
+├── standards/                  # git submodule ของ csmju2030-standards
+├── .github/workflows/ci.yml    # 🔴 ห้ามแก้ (GH-03)
+├── frontend/                   # Next.js  ← โฟลเดอร์นี้
+└── backend/                    # NestJS   ← ทำทีหลัง
 ```
 
 ---
 
-## 2. แก้ 5 จุดให้เป็นระบบของตัวเอง
+## 2. แก้ 4 จุดให้เป็นระบบของตัวเอง
 
 | ไฟล์ | แก้ |
 |---|---|
-| `subsystem.yaml` | `name` · `display_name` · `owner` · `ui.nav` |
-| `src/app/layout.tsx` | `subsystemName` · `displayName` · `nav` |
-| `src/app/page.tsx` | เนื้อหาหน้าภาพรวม |
-| `src/app/equipment-items/` | เปลี่ยนชื่อโฟลเดอร์เป็นทรัพยากรของระบบตัวเอง (kebab-case ตรงกับ path ของ API) |
+| `subsystem.yaml` | `name` · `display_name` · `owners` · บล็อก `ui:` (`design_system_version`, `nav`) |
+| `frontend/src/app/layout.tsx` | `subsystemName` · `displayName` · `nav` |
+| `frontend/src/app/page.tsx` | เนื้อหาหน้าภาพรวม |
+| `frontend/src/app/equipment-items/` | เปลี่ยนเป็นทรัพยากรของระบบตัวเอง (kebab-case ตรงกับ path ของ API ตาม API-02) |
 | `.env.local` | `NEXT_PUBLIC_CSMJU_CORE_URL` · `NEXT_PUBLIC_API_BASE_URL` |
 
 ---
@@ -186,11 +194,25 @@ export function ItemsClient() {
 ## 4. ก่อนเปิด PR
 
 ```bash
-npx csmju-ui-lint     # ต้องเขียว
-npx next build        # ต้องไม่มี type error
+# แตก branch ตามรูปแบบบังคับ (GH-01)
+git checkout -b feature/<subsystem>/<เรื่องที่ทำ>
+
+# ตรวจชั้นหน้าจอ
+pnpm --filter frontend lint:ui
+
+# ตรวจ compliance gate กลางทั้ง 8 job (ได้ผลเหมือน CI แต่เร็วกว่า)
+./standards/scripts/run-all-checks.sh .
+
+# commit ตาม Conventional Commits (GH-02)
+git commit -m "feat(<subsystem>): เพิ่มหน้ารายการครุภัณฑ์"
+git push origin feature/<subsystem>/<เรื่องที่ทำ>
+gh pr create --base main
 ```
 
 แล้วไล่ checklist §18.2 ในเอกสารมาตรฐาน — 15 ข้อ ใช้เวลา 10 นาที
+
+> ถ้ามีข้อที่แก้ไม่ได้จริงๆ ให้ขอข้อยกเว้นผ่าน `.compliance-exceptions.yml` (ci-compliance-spec §11)
+> ต้องมี `reason` และ `expires` — `csmju-ui-lint` เคารพไฟล์นี้และจะไม่ยกเว้นข้อที่หมดอายุแล้ว
 
 ---
 
@@ -199,10 +221,12 @@ npx next build        # ต้องไม่มี type error
 | อาการ | สาเหตุ | แก้ |
 |---|---|---|
 | `useToast ต้องเรียกภายใน <CsmjuAppShell>` | เรียก hook นอก AppShell หรือมี AppShell ซ้อนกัน | เรียก `<CsmjuAppShell>` ที่ `app/layout.tsx` ที่เดียว |
-| ฟอนต์ไทยเป็นฟอนต์ระบบ | ไม่ได้ `@import ".../styles.css"` | ใส่ใน `globals.css` |
-| utility `bg-csmju-primary` ไม่ทำงาน | ลืม `@import ".../theme.css"` (Tailwind v4) | ใส่เพิ่ม หรือใช้ preset ถ้าเป็น v3 |
+| ฟอนต์ไทยเป็นฟอนต์ระบบ | ไม่ได้ `@import ".../styles.css"` | ใส่ใน `globals.css` เป็นบรรทัดแรก |
+| utility `bg-csmju-primary` ไม่ทำงาน | `tailwind.config.ts` ไม่ได้ใส่ preset | `presets: [csmjuPreset]` |
+| CI แดงที่ QA-05 | เผลอรัน `npm install` | ลบ `package-lock.json` แล้ว `pnpm install` |
+| CI แดงที่ ARC-02 | ลง dependency นอก whitelist | ดูรายการที่อนุญาตใน `standards/scripts/lib/allowed-deps.json` |
 | ปีเป็น ค.ศ. | แปลงวันที่เอง | ใช้ `formatDate()` เท่านั้น |
 | ราคาผิดไป 100 เท่า | ลืมว่า API ส่งเป็นสตางค์ | `formatMoney()` หารให้แล้ว อย่าหารซ้ำ |
-| `csmju-ui-lint` ฟ้อง `missing-loading` | route segment ใหม่ยังไม่มี `loading.tsx` | คัดลอกจาก segment เดิม |
+| `csmju-ui-lint` ฟ้อง `[DS-02]` | route segment ใหม่ยังไม่มี `loading.tsx` | คัดลอกจาก segment เดิม |
 
 ยังติด → ถาม PL ของทีมก่อน · ถ้าเป็นเรื่องที่ design system ไม่มีของให้ใช้ → ทำตาม §17.4 (ขอ component ใหม่)

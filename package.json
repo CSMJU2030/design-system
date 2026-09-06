@@ -18,6 +18,7 @@
   "files": [
     "dist",
     "tailwind-preset.js",
+    "tailwind-preset.d.ts",
     "README.md",
     "CHANGELOG.md"
   ],
@@ -39,7 +40,10 @@
     "./tokens.css": "./dist/tokens.css",
     "./fonts.css": "./dist/fonts.css",
     "./theme.css": "./dist/theme.css",
-    "./tailwind-preset": "./tailwind-preset.js",
+    "./tailwind-preset": {
+      "types": "./tailwind-preset.d.ts",
+      "default": "./tailwind-preset.js"
+    },
     "./package.json": "./package.json",
     "./components.css": "./dist/components.css"
   },
