@@ -1,0 +1,13 @@
+/**
+ * @csmju2030/design-system — จุดเข้าเดียวสำหรับระบบย่อย
+ *
+ * ใช้ที่ app/globals.css ของระบบย่อย:
+ *   @import "@csmju2030/design-system/styles.css";
+ *
+ * ถ้าต้องการควบคุมฟอนต์เอง (เช่นใช้ next/font/local) ให้ import แยก:
+ *   @import "@csmju2030/design-system/tokens.css";
+ */
+@import "./fonts.css";
+@import "./tokens.css";
+@import "./base.css";
+@import "./components.css";

@@ -1,0 +1,184 @@
+/**
+ * @csmju2030/design-system — Base layer
+ * อ้างอิง §4.3 · §6 · §12
+ * 🔴 ห้าม override กฎในไฟล์นี้ในระบบย่อย
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background-color: var(--csmju-color-canvas);
+  color: var(--csmju-color-text-body);
+  font-family: var(--csmju-font-body);
+  font-size: var(--csmju-text-body);
+  line-height: var(--csmju-text-body-lh);
+  /* §4.3.2 ห้าม letter-spacing ติดลบกับข้อความไทย */
+  letter-spacing: 0;
+  /* §4.3.5 ห้าม break-all — จะตัดกลางคำ/กลางสระไทย */
+  word-break: normal;
+  overflow-wrap: break-word;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* §6.1 ห้าม horizontal scroll ของทั้งหน้า */
+  overflow-x: hidden;
+}
+
+/* §4.3 กฎเฉพาะเมื่อหน้าเป็นภาษาไทย */
+html[lang="th"] body {
+  font-family: var(--csmju-font-body);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--csmju-font-heading);
+  color: var(--csmju-color-text);
+  margin: 0;
+  /* §4.3.3 ห้าม uppercase กับข้อความไทย */
+  text-transform: none;
+}
+
+p,
+ul,
+ol,
+figure {
+  margin: 0;
+}
+
+/* §4.3.9 ตัวเลขในคอลัมน์/สถิติ ต้อง tabular */
+table,
+.csmju-tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* §12.5 focus ที่มองเห็นได้เสมอ — ห้าม outline:none โดยไม่มีของแทน */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--csmju-color-focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--csmju-radius-sm);
+}
+
+/* §6.1 input บนมือถือต้อง ≥16px ไม่งั้น iOS Safari ซูมเอง */
+input,
+select,
+textarea,
+button {
+  font-family: inherit;
+  font-size: max(16px, 1em);
+  color: inherit;
+}
+
+img,
+svg,
+video {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* §12.3 skip link */
+.csmju-skip-link {
+  position: absolute;
+  left: var(--csmju-space-4);
+  top: calc(var(--csmju-space-4) * -10);
+  z-index: var(--csmju-z-toast);
+  padding: var(--csmju-space-3) var(--csmju-space-4);
+  background-color: var(--csmju-color-surface);
+  color: var(--csmju-color-primary);
+  border: 1px solid var(--csmju-color-border-strong);
+  border-radius: var(--csmju-radius-sm);
+  box-shadow: var(--csmju-shadow-md);
+  font-size: var(--csmju-text-body-sm);
+  font-weight: 600;
+  text-decoration: none;
+  transition: top var(--csmju-duration-fast) var(--csmju-ease-out);
+}
+.csmju-skip-link:focus {
+  top: var(--csmju-space-4);
+}
+
+/* §12 ซ่อนจากตาแต่ให้ screen reader อ่านได้ */
+.csmju-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* §8.1 ความยาวบรรทัดที่อ่านสบายสำหรับบทความ/ประกาศ (§4.3.8) */
+.csmju-prose {
+  max-width: 68ch;
+  /* §4.3.7 ห้าม justify กับข้อความไทย */
+  text-align: start;
+}
+
+/* §3.6 บังคับรองรับ prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* §6.1 safe area สำหรับแถบล่างที่ fixed บนเครื่องมีรอยบาก */
+.csmju-safe-bottom {
+  padding-bottom: max(var(--csmju-space-4), env(safe-area-inset-bottom));
+}
+
+@keyframes csmju-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes csmju-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+@keyframes csmju-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes csmju-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

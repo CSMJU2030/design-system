@@ -1,0 +1,62 @@
+name: ขอ component / token ใหม่
+description: เมื่อของที่มีใน design system ไม่พอใช้ (§17.4)
+title: "[component-request] "
+labels: ["component-request"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **ก่อนเปิด issue นี้:** PL ต้องกลั่นกรองแล้วว่า (ก) ใช้ของเดิมประกอบกันไม่ได้จริง
+        และ (ข) เช็กแล้วว่ามีระบบอื่นเจอปัญหาเดียวกันหรือไม่
+
+        **SLA: PM ตอบภายใน 3 วันทำการ** — ถ้าเกิน ให้ทำเป็น local component ไปก่อนแล้วค่อยรวมทีหลัง
+
+  - type: input
+    id: subsystem
+    attributes:
+      label: ระบบย่อย
+      placeholder: csmju-equipment (ระบบครุภัณฑ์)
+    validations: { required: true }
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: ปัญหาที่เจอ
+      description: อธิบายสถานการณ์จริง ไม่ใช่ชื่อ component ที่อยากได้
+      placeholder: "ต้องให้ผู้ใช้เลือกช่วงวันที่ยืม-คืน แล้วเห็นว่าวันไหนของถูกจองไปแล้ว"
+    validations: { required: true }
+
+  - type: textarea
+    id: why-not-existing
+    attributes:
+      label: ทำไมของเดิมไม่พอ
+      description: ระบุว่าลองใช้อะไรไปแล้วบ้างและติดตรงไหน
+      placeholder: "ลองใช้ DatePicker 2 ตัวคู่กันแล้ว แต่แสดงวันที่ถูกจองไม่ได้"
+    validations: { required: true }
+
+  - type: textarea
+    id: sketch
+    attributes:
+      label: ภาพร่าง
+      description: วาดมือถ่ายรูปมาก็ได้ / ASCII ก็ได้ / ลิงก์ Figma ก็ได้
+    validations: { required: true }
+
+  - type: dropdown
+    id: urgency
+    attributes:
+      label: ความเร่งด่วน
+      options:
+        - บล็อกงานอยู่ตอนนี้
+        - ต้องใช้ภายใน sprint นี้
+        - ยังไม่รีบ เสนอไว้ก่อน
+    validations: { required: true }
+
+  - type: checkboxes
+    id: checked
+    attributes:
+      label: ยืนยันก่อนส่ง
+      options:
+        - label: PL ของทีมกลั่นกรองแล้ว
+          required: true
+        - label: อ่าน docs/COMPONENTS.md แล้วว่าไม่มีของที่ทำได้
+          required: true

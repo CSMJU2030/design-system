@@ -1,0 +1,40 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [master, main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - run: npm ci
+      - name: typecheck
+        run: npm run typecheck
+      - name: build
+        run: npm run build
+      - name: design system ตรวจตัวเอง
+        run: npm run lint:self
+
+      # ยืนยันว่า package ใช้ได้จริงใน Next.js App Router ไม่ใช่แค่ build ผ่าน
+      # (เคยเจอบั๊กที่ "use client" หายตอน bundle แล้ว next build พังตอน collect page data)
+      - name: integration — build ตัวอย่างระบบย่อยจริง
+        run: |
+          npm pack --pack-destination /tmp
+          cd examples/subsystem-template
+          # ติดตั้งจาก tarball ที่เพิ่ง pack ตรงๆ เพื่อไม่ต้องพึ่ง registry ที่ยังไม่มีเวอร์ชันนี้
+          npm install --no-audit --no-fund /tmp/csmju2030-design-system-*.tgz
+          npx next build
+        env:
+          NEXT_PUBLIC_CSMJU_CORE_URL: https://core.csmju2030.ac.th
+          NEXT_PUBLIC_API_BASE_URL: https://api.csmju2030.ac.th
+
+      - name: integration — csmju-ui-lint ต้องเขียวกับ template
+        run: cd examples/subsystem-template && node ../../tools/csmju-ui-lint.mjs

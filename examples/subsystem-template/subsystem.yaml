@@ -1,0 +1,15 @@
+name: csmju-equipment
+display_name: "ระบบครุภัณฑ์"
+owner: 6xxxxxxxx-somchai
+standards_version: "1.2.0"
+stack:
+  frontend: "next@15"
+  backend: "nest@11"
+  database: "postgresql@16"
+ui:
+  design_system_version: "1.2.0"
+  theme: light
+  nav:
+    - { label: "ภาพรวม", path: "/" }
+    - { label: "รายการครุภัณฑ์", path: "/equipment-items" }
+  local_components: []

@@ -1,0 +1,61 @@
+# CI มาตรฐานของระบบย่อย — คัดลอกไปที่ .github/workflows/ui-compliance.yml ของ repo ระบบย่อย
+# อ้างอิง ui-design-system.md §17.2
+#
+# 🔴 ห้ามลบ job หรือ step ออก — ถ้าติดจริงให้เปิด issue ที่ CSMJU2030/design-system
+
+name: ui-compliance
+
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+
+jobs:
+  ui-compliance:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://npm.pkg.github.com"
+          scope: "@csmju2030"
+
+      - name: ติดตั้ง dependency
+        run: npm ci
+        env:
+          # GITHUB_TOKEN ของ repo อ่าน package ของ org ได้อยู่แล้ว ไม่ต้องสร้าง secret เพิ่ม
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # §17.2 · §18.2 — ต้อง build ผ่านโดยไม่มี type error (strict mode)
+      - name: next build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_CSMJU_CORE_URL: https://core.csmju2030.ac.th
+          NEXT_PUBLIC_API_BASE_URL: https://api.csmju2030.ac.th
+
+      # §16.2 — ข้อห้าม 25 ข้อ + โครงไฟล์ที่บังคับ + เวอร์ชันมาตรฐาน
+      - name: csmju-ui-lint
+        run: npx csmju-ui-lint
+
+      # §12 — accessibility ระดับโค้ด
+      - name: eslint (jsx-a11y)
+        run: npm run lint --if-present
+
+  # §17.2 — Lighthouse: Performance >= 85 · Accessibility >= 95
+  # เปิดใช้เมื่อระบบย่อย deploy preview ได้แล้ว (สัปดาห์ 5 เป็นต้นไป)
+  lighthouse:
+    if: false
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: treosh/lighthouse-ci-action@v12
+        with:
+          urls: ${{ vars.PREVIEW_URL }}
+          budgetPath: ./lighthouse-budget.json
+          uploadArtifacts: true

@@ -1,0 +1,131 @@
+/**
+ * @csmju2030/design-system — Tailwind CSS v4 theme
+ *
+ * สำหรับระบบย่อยที่ใช้ Tailwind v4 (Next.js 15/16 + @tailwindcss/postcss)
+ * ใส่ใน app/globals.css:
+ *
+ *   @import "tailwindcss";
+ *   @import "@csmju2030/design-system/styles.css";
+ *   @import "@csmju2030/design-system/theme.css";
+ *
+ * จะได้ utility class: bg-csmju-primary, text-csmju-body, p-csmju-6, rounded-csmju-lg ฯลฯ
+ * 🔴 ห้ามใช้ utility ที่มีตัวเลขดิบ (p-[15px], text-[#004C99]) — CI จะ fail
+ */
+
+@theme {
+  /* ---------- สี ---------- */
+  --color-csmju-primary: var(--csmju-color-primary);
+  --color-csmju-primary-hover: var(--csmju-color-primary-hover);
+  --color-csmju-primary-active: var(--csmju-color-primary-active);
+  --color-csmju-primary-soft: var(--csmju-color-primary-soft);
+  --color-csmju-primary-soft-hover: var(--csmju-color-primary-soft-hover);
+  --color-csmju-focus-ring: var(--csmju-color-focus-ring);
+
+  --color-csmju-canvas: var(--csmju-color-canvas);
+  --color-csmju-surface: var(--csmju-color-surface);
+  --color-csmju-surface-muted: var(--csmju-color-surface-muted);
+  --color-csmju-surface-inverse: var(--csmju-color-surface-inverse);
+
+  --color-csmju-text: var(--csmju-color-text);
+  --color-csmju-body: var(--csmju-color-text-body);
+  --color-csmju-muted: var(--csmju-color-text-muted);
+  --color-csmju-inverse: var(--csmju-color-text-inverse);
+
+  --color-csmju-border: var(--csmju-color-border);
+  --color-csmju-border-strong: var(--csmju-color-border-strong);
+
+  --color-csmju-success: var(--csmju-color-success-text);
+  --color-csmju-success-bg: var(--csmju-color-success-bg);
+  --color-csmju-success-border: var(--csmju-color-success-border);
+  --color-csmju-warning: var(--csmju-color-warning-text);
+  --color-csmju-warning-bg: var(--csmju-color-warning-bg);
+  --color-csmju-warning-border: var(--csmju-color-warning-border);
+  --color-csmju-danger: var(--csmju-color-danger-text);
+  --color-csmju-danger-bg: var(--csmju-color-danger-bg);
+  --color-csmju-danger-border: var(--csmju-color-danger-border);
+  --color-csmju-info: var(--csmju-color-info-text);
+  --color-csmju-info-bg: var(--csmju-color-info-bg);
+  --color-csmju-info-border: var(--csmju-color-info-border);
+
+  --color-csmju-chart-1: var(--csmju-chart-1);
+  --color-csmju-chart-2: var(--csmju-chart-2);
+  --color-csmju-chart-3: var(--csmju-chart-3);
+  --color-csmju-chart-4: var(--csmju-chart-4);
+  --color-csmju-chart-5: var(--csmju-chart-5);
+  --color-csmju-chart-6: var(--csmju-chart-6);
+
+  /* ---------- ระยะห่าง (8pt) ---------- */
+  --spacing-csmju-1: var(--csmju-space-1);
+  --spacing-csmju-2: var(--csmju-space-2);
+  --spacing-csmju-3: var(--csmju-space-3);
+  --spacing-csmju-4: var(--csmju-space-4);
+  --spacing-csmju-5: var(--csmju-space-5);
+  --spacing-csmju-6: var(--csmju-space-6);
+  --spacing-csmju-8: var(--csmju-space-8);
+  --spacing-csmju-10: var(--csmju-space-10);
+  --spacing-csmju-12: var(--csmju-space-12);
+  --spacing-csmju-16: var(--csmju-space-16);
+  --spacing-csmju-20: var(--csmju-space-20);
+
+  /* ---------- มุมโค้ง ---------- */
+  --radius-csmju-sm: var(--csmju-radius-sm);
+  --radius-csmju-md: var(--csmju-radius-md);
+  --radius-csmju-lg: var(--csmju-radius-lg);
+  --radius-csmju-xl: var(--csmju-radius-xl);
+  --radius-csmju-full: var(--csmju-radius-full);
+
+  /* ---------- เงา ---------- */
+  --shadow-csmju-sm: var(--csmju-shadow-sm);
+  --shadow-csmju-md: var(--csmju-shadow-md);
+  --shadow-csmju-lg: var(--csmju-shadow-lg);
+
+  /* ---------- ฟอนต์ ---------- */
+  --font-csmju-heading: var(--csmju-font-heading);
+  --font-csmju-body: var(--csmju-font-body);
+  --font-csmju-mono: var(--csmju-font-mono);
+
+  /* ---------- Type scale ---------- */
+  --text-csmju-display: var(--csmju-text-display);
+  --text-csmju-display--line-height: var(--csmju-text-display-lh);
+  --text-csmju-display--font-weight: 700;
+  --text-csmju-h1: var(--csmju-text-h1);
+  --text-csmju-h1--line-height: var(--csmju-text-h1-lh);
+  --text-csmju-h1--font-weight: 700;
+  --text-csmju-h2: var(--csmju-text-h2);
+  --text-csmju-h2--line-height: var(--csmju-text-h2-lh);
+  --text-csmju-h2--font-weight: 600;
+  --text-csmju-h3: var(--csmju-text-h3);
+  --text-csmju-h3--line-height: var(--csmju-text-h3-lh);
+  --text-csmju-h3--font-weight: 600;
+  --text-csmju-h4: var(--csmju-text-h4);
+  --text-csmju-h4--line-height: var(--csmju-text-h4-lh);
+  --text-csmju-h4--font-weight: 600;
+  --text-csmju-body-lg: var(--csmju-text-body-lg);
+  --text-csmju-body-lg--line-height: var(--csmju-text-body-lg-lh);
+  --text-csmju-body: var(--csmju-text-body);
+  --text-csmju-body--line-height: var(--csmju-text-body-lh);
+  --text-csmju-body-sm: var(--csmju-text-body-sm);
+  --text-csmju-body-sm--line-height: var(--csmju-text-body-sm-lh);
+  --text-csmju-caption: var(--csmju-text-caption);
+  --text-csmju-caption--line-height: var(--csmju-text-caption-lh);
+  --text-csmju-caption--font-weight: 500;
+
+  /* ---------- Z-index ---------- */
+  --z-index-csmju-sticky: 100;
+  --z-index-csmju-header: 200;
+  --z-index-csmju-drawer: 300;
+  --z-index-csmju-modal: 400;
+  --z-index-csmju-popover: 500;
+  --z-index-csmju-toast: 600;
+
+  /* ---------- Breakpoints (§3.7) ---------- */
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+
+  /* ---------- Motion ---------- */
+  --ease-csmju-standard: var(--csmju-ease-standard);
+  --ease-csmju-out: var(--csmju-ease-out);
+}

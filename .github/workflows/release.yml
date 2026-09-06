@@ -1,0 +1,41 @@
+name: release
+
+# ปล่อยเวอร์ชันใหม่ด้วยการสร้าง tag: git tag v1.2.0 && git push origin v1.2.0
+# 🔴 ก่อน tag ต้องอัปเดต CHANGELOG.md และ version ใน package.json ให้ตรงกันเสมอ (§17.5)
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://npm.pkg.github.com"
+          scope: "@csmju2030"
+          cache: npm
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run build
+
+      - name: เวอร์ชันใน package.json ต้องตรงกับ tag
+        run: |
+          PKG=$(node -p "require('./package.json').version")
+          TAG="${GITHUB_REF_NAME#v}"
+          if [ "$PKG" != "$TAG" ]; then
+            echo "::error::package.json = $PKG แต่ tag = $TAG — ต้องตรงกัน (§17.5)"
+            exit 1
+          fi
+
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
