@@ -20,7 +20,7 @@ import { Package, Repeat } from "@csmju2030/design-system/icons";
 | `subsystemName` | `string` | ต้องตรงกับ `name` ใน `subsystem.yaml` |
 | `displayName` | `string` | ชื่อไทยของระบบย่อย ตาม data-dictionary §4 |
 | `nav` | `CsmjuNavItem[]` | `{ label, href, icon?, count? }` — `icon` เป็นชื่อ Lucide แบบ kebab-case |
-| `user` | `CsmjuUser \| null` | ส่งจาก Server Component ได้ ถ้าไม่ส่งจะเรียก `/api/v1/me` ให้เอง |
+| `user` | `CsmjuUser \| null` | **ปกติไม่ต้องส่ง** — อ่าน `username`/`layer1_role`/`faculty` จาก JWT claims ให้เอง (auth-contract §10) · ส่งเองเมื่อมี `full_name` หรือ `layer2_role` จาก API ของระบบย่อย |
 | `notificationCount` | `number` | จำนวนที่ยังไม่อ่าน (0 = ซ่อน badge) |
 | `notificationHref` | `string` | ปลายทางของกระดิ่ง — ไม่ส่ง = ซ่อนกระดิ่ง |
 | `headerSlot` | `ReactNode` | ของเพิ่มบน header เช่นช่องค้นหา |
@@ -233,8 +233,10 @@ const env  = await csmjuFetchEnvelope<T>(path, options);      // เอา meta 
 - `error` เป็น `CsmjuErrorUi` ที่ map ตามตาราง §9.3 แล้ว: `{ code, presentation, message, field?, retryable, requestId? }`
 - ส่ง `error` เข้า `<ErrorState>` หรือ `<DataTable error>` ได้ตรงๆ
 - `error.field` (จาก `VALIDATION_ERROR`) เอาไปเลือกฟิลด์ที่จะแสดงข้อความและ focus
-- 401 จัดการเองเงียบๆ: refresh → retry 1 ครั้ง → ถ้าไม่สำเร็จส่งไปหน้า login ของ Core
-- token อยู่ใน httpOnly cookie ทุก request ส่ง `credentials: "include"` — 🔴 ห้ามอ่าน/เก็บ token เอง
+- 401 จัดการเองเงียบๆ: refresh → retry 1 ครั้ง → ถ้าไม่สำเร็จส่งไปหน้า login ของ Core (auth-contract §20–§23)
+- ทุก request แนบ `Authorization: Bearer <access_token>` ให้เอง (auth-contract §7) — 🔴 ห้ามแนบเอง
+- access token อยู่ใน **หน่วยความจำ** ไม่ใช่ cookie/localStorage · refresh token อยู่ใน httpOnly cookie ที่ route handler `/auth/*` ตั้งให้
+- `meta` ของ pagination คือ `{ page, per_page, total }` ตาม api-conventions §4 — ส่งเข้า `<Pagination>` ได้ตรง ๆ
 
 ### ตาราง error → UI (จัดการให้แล้ว)
 | code | presentation | สิ่งที่ผู้ใช้เห็น |

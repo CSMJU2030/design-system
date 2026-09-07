@@ -1,6 +1,6 @@
 {
   "name": "@csmju2030/design-system",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "UI Kit และ Design Token มาตรฐานกลางของโครงการ CSMJU2030 — ใช้ร่วมกันทั้ง 37 ระบบย่อย",
   "license": "UNLICENSED",
   "private": false,
@@ -45,7 +45,11 @@
       "default": "./tailwind-preset.js"
     },
     "./package.json": "./package.json",
-    "./components.css": "./dist/components.css"
+    "./components.css": "./dist/components.css",
+    "./server": {
+      "types": "./dist/server/index.d.ts",
+      "default": "./dist/server/index.js"
+    }
   },
   "scripts": {
     "build": "tsup && node scripts/postbuild.mjs",

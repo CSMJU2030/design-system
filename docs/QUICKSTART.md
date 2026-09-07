@@ -64,7 +64,21 @@ csmju-<ชื่อระบบ>/
 | `frontend/src/app/layout.tsx` | `subsystemName` · `displayName` · `nav` |
 | `frontend/src/app/page.tsx` | เนื้อหาหน้าภาพรวม |
 | `frontend/src/app/equipment-items/` | เปลี่ยนเป็นทรัพยากรของระบบตัวเอง (kebab-case ตรงกับ path ของ API ตาม API-02) |
-| `.env.local` | `NEXT_PUBLIC_CSMJU_CORE_URL` · `NEXT_PUBLIC_API_BASE_URL` |
+| `.env.local` | ดูตารางข้างล่าง |
+
+**ไฟล์ที่ห้ามแตะ:** `frontend/src/app/auth/[csmju]/route.ts` — 2 บรรทัดนี้คือ OAuth flow ทั้งหมด
+(`auth-contract.md` §22 ห้าม AIE ออกแบบ refresh flow เอง · `csmju-ui-lint` DS-21/DS-22 ตรวจอยู่)
+
+### ตัวแปรใน `.env.local`
+
+| ตัวแปร | ใช้ที่ไหน | ขอจากใคร |
+|---|---|---|
+| `NEXT_PUBLIC_CSMJU_CORE_URL` | หน้า login/logout ของ Core | PM2 |
+| `NEXT_PUBLIC_API_BASE_URL` | base URL ของ NestJS ระบบตัวเอง | ตัวเอง |
+| `CSMJU_CLIENT_ID` | แลก authorization code (auth-contract §26) | 🔴 **PM2 เท่านั้น** — ไม่มีค่านี้ login ไม่ได้ |
+| `CSMJU_APP_ORIGIN` | ประกอบ `redirect_uri` — ไม่ใส่ก็ได้ จะเดาจาก request | ตัวเอง |
+
+🔴 สองตัวล่าง **ห้าม** ขึ้นต้นด้วย `NEXT_PUBLIC_` เพราะจะหลุดไปอยู่ใน bundle ฝั่ง client
 
 ---
 

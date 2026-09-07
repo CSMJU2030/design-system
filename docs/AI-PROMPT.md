@@ -4,7 +4,7 @@
 > พร้อมแนบไฟล์ [`ui-design-system.md`](ui-design-system.md) และ [`COMPONENTS.md`](COMPONENTS.md) ทั้งไฟล์
 > แล้วจึงกรอกเทมเพลตข้อ 2 สั่งงานจริง
 >
-> ไฟล์นี้เป็นฉบับที่ **อัปเดตตาม API จริงของ `@csmju2030/design-system@1.2.0`** แล้ว
+> ไฟล์นี้เป็นฉบับที่ **อัปเดตตาม API จริงของ `@csmju2030/design-system@1.3.0`** แล้ว
 > (ต่างจาก §20.1 ในเอกสารมาตรฐานตรงที่ระบุชื่อ component/ฟังก์ชันที่มีอยู่จริง)
 
 ---
@@ -28,13 +28,15 @@ Next.js ฝั่งหน้าเว็บห้ามต่อ PostgreSQL โ
    ใช้ CSS variable --csmju-* หรือ utility class จาก theme ของโครงการเท่านั้น
    ห้ามใช้ Tailwind arbitrary value เช่น p-[15px] หรือ text-[#004C99]
 2. ห้ามติดตั้งหรือ import UI library อื่น (MUI, Ant Design, Bootstrap, Chakra, DaisyUI, shadcn)
-3. ห้ามสร้างหน้า login, ฟอร์ม username/password, logic ตรวจ token หรือ refresh token
+3. ห้ามสร้างหน้า login, ฟอร์ม username/password, logic ตรวจ token, refresh token
+   หรือเรียก /oauth/token ของ Core เอง (auth-contract.md §22 ห้าม AIE ออกแบบ refresh flow เอง)
 4. ทุกหน้าต้องถูกครอบด้วย <CsmjuAppShell> ที่ app/layout.tsx ที่เดียว
 5. ห้ามใช้ <div onClick> ใช้ <button> สำหรับการกระทำ และ <Link> สำหรับการนำทาง
 6. ห้ามใช้ placeholder แทน label ทุก input ต้องอยู่ใน <FormField label="...">
 7. ห้ามคิดข้อความ error เอง ให้ใช้ error จาก useApi() ซึ่ง map ให้แล้ว
 8. ห้ามใช้ emoji ในหน้าจอระบบ
-9. ห้ามใช้ localStorage เก็บ token
+9. ห้ามใช้ localStorage หรือ sessionStorage เก็บ token (SEC-03)
+   access token อยู่ใน memory และ refresh token อยู่ใน httpOnly cookie ที่ package จัดการให้แล้ว
 10. ห้าม hardcode รายชื่อคณะ ให้เรียก API /v1/faculties
 11. ห้ามใช้ Pages Router, Vite, Nuxt หรือ CRA
 12. ห้ามใช้ next/font/google (ฟอนต์มาจาก styles.css ของ package แล้ว)
@@ -48,6 +50,14 @@ Next.js ฝั่งหน้าเว็บห้ามต่อ PostgreSQL โ
 19. ห้ามเพิ่ม dependency นอก whitelist: next, react, react-dom, typescript, tailwindcss, postcss,
     autoprefixer, @csmju2030/design-system, zustand, axios, @tanstack/react-query, zod,
     openapi-typescript, eslint, prettier, vitest, @testing-library/react
+20. ต้องมีไฟล์ frontend/src/app/auth/[csmju]/route.ts ที่มีเนื้อหาเท่านี้เท่านั้น:
+        import { createCsmjuAuthRoutes } from "@csmju2030/design-system/server";
+        export const { GET, POST } = createCsmjuAuthRoutes();
+    ถ้าไม่มี ผู้ใช้จะ login ไม่ได้และจะโดนเด้งออกทุกครั้งที่ reload (csmju-ui-lint DS-22)
+21. ห้ามแนบ Authorization header เอง — csmjuFetch/useApi แนบ Bearer token ให้แล้วตาม auth-contract §7
+22. ข้อมูลผู้ใช้อ่านจาก useCsmjuUser() เท่านั้น ห้ามเรียก endpoint /me (ไม่มีในสัญญา)
+    JWT มีแค่ sub, username, layer1_role, faculty, iat, exp — ถ้าต้องการชื่อ-นามสกุล
+    ต้องดึงจาก API ของระบบย่อยเองแล้วส่งเข้า prop user ของ CsmjuAppShell
 
 Component ที่ต้องใช้ (มีอยู่แล้ว ห้ามเขียนเอง):
 - Layout: CsmjuAppShell, Container, Stack, Section, PageHeader, Card, Grid, Divider, Breadcrumb
@@ -79,7 +89,8 @@ Component ที่ต้องใช้ (มีอยู่แล้ว ห้�
   const { data, meta, loading, error, refetch } = useApi<T>("/api/v1/xxx", { query: {...} });
   const { mutate, loading, error } = useMutation<TBody, TResult>("/api/v1/xxx");
 useApi จัดการให้แล้ว: envelope { success, data, meta } ของ NestJS, การ map error.code เป็น UI,
-การหน่วง skeleton 300ms, การ refresh token เมื่อ 401 แล้ว retry
+การหน่วง skeleton 300ms, การแนบ Authorization: Bearer, การ refresh token เมื่อ 401 แล้ว retry
+meta ของ pagination คือ { page, per_page, total } ตาม api-conventions.md §4
 error ที่ได้เป็น object { code, presentation, message, field, retryable, requestId }
 ส่งเข้า <ErrorState error={error} onRetry={refetch}/> หรือ <DataTable error={error}/> ได้ตรงๆ
 ถ้า error.presentation === "field" ให้แสดง error.message ใต้ฟิลด์ชื่อ error.field แล้ว focus ไปที่ฟิลด์นั้น

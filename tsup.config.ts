@@ -24,5 +24,5 @@ export default defineConfig({
   clean: true,
   outDir: "dist",
   target: "es2022",
-  external: ["react", "react-dom", "next", "lucide-react", "clsx"],
+  external: ["react", "react-dom", "next", "next/server", "lucide-react", "clsx"],
 });

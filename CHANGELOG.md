@@ -4,11 +4,56 @@
 
 | ประเภท | ระบบย่อยต้องทำอะไร |
 |---|---|
-| **PATCH** (1.2.x) | `npm update` ก็จบ |
+| **PATCH** (1.3.x) | `npm update` ก็จบ |
 | **MINOR** (1.x.0) | อัปเดตเมื่อสะดวก ภายใน 1 sprint |
 | **MAJOR** (x.0.0) | PM ประกาศล่วงหน้า ≥ 2 สัปดาห์ + มี migration guide + ของเดิม deprecated อย่างน้อย 1 minor cycle ก่อนลบจริง |
 
 > `csmju-ui-lint` จะ **เตือน** เมื่อ `standards_version` ตามหลังเกิน 1 minor และ **fail** เมื่อตามหลังเกิน 1 major
+
+---
+
+## 1.3.0 — 7 ก.ย. 2569
+
+ปรับ auth ทั้งหมดให้ตรงกับ `csmju2030-standards` v1.3.0 หลังได้อ่าน `auth-contract.md`
+และ `api-conventions.md` ฉบับจริง (v1.2.0 เขียนโดยยังไม่ได้อ่านสองไฟล์นี้ จึงเดาสัญญาไว้ผิด)
+
+> ยังไม่มีระบบย่อยไหนใช้ v1.2.0 จริง (ยังไม่เคย publish) การเปลี่ยนครั้งนี้จึงไม่กระทบใคร
+> แต่ถ้าเริ่มไปแล้วให้ถือว่าเป็น **breaking**
+
+### แก้ให้ตรงสัญญา
+
+| เรื่อง | เดิม (ผิด) | ใหม่ | อ้างอิง |
+|---|---|---|---|
+| การแนบ token | cookie + `credentials:"include"` | `Authorization: Bearer <access_token>` | auth-contract §7 |
+| refresh token | `POST {CORE}/api/v1/auth/refresh` | `POST {CORE}/oauth/token` grant_type `refresh_token` | auth-contract §19 |
+| ข้อมูลผู้ใช้ | `GET {API}/api/v1/me` | อ่านจาก JWT claims — **ไม่มี endpoint /me ในสัญญา** | auth-contract §10 |
+| `meta` pagination | `{ total, total_pages }` | `{ page, per_page, total }` | api-conventions §4 |
+
+### เพิ่ม
+
+- **`@csmju2030/design-system/server`** — entry ใหม่สำหรับโค้ดฝั่ง server
+  - `createCsmjuAuthRoutes()` ให้ route handler ครบ 4 เส้นทาง (`/auth/login`, `/auth/callback`,
+    `/auth/refresh`, `/auth/logout`) ระบบย่อยเขียนไฟล์เดียว 2 บรรทัด
+  - เป็นจุดเดียวในทั้งโครงการที่ยิงไปที่ `/oauth/token` ของ Core
+  - `state` แบบสุ่มกัน CSRF · cookie ขึ้นต้น `__Host-` บังคับ Secure + Path=/
+  - refresh token หมุนทุกครั้งตาม §20 ข้อ 1
+- `token-store` — `getAccessToken`, `getJwtClaims`, `decodeJwtClaims`, `isAccessTokenExpiring`
+  access token อยู่ใน memory เท่านั้น (ทางเดียวที่ผ่านทั้ง §7 และ SEC-03)
+- `userFromClaims()` — แปลง JWT claims เป็น `CsmjuUser`
+- lint **DS-21** เรียก `/oauth/token` หรือใช้ `grant_type` เอง → error
+- lint **DS-22** ไม่มี route handler `/auth` หรือมีแต่ไม่ได้ใช้ `createCsmjuAuthRoutes()` → error
+
+### เปลี่ยนแบบ breaking
+
+- `CsmjuUser.full_name` เป็น optional — JWT ไม่มีชื่อ-นามสกุล (§10 ห้ามเพิ่ม field)
+  หน้าจอจะแสดง `username` แทนเมื่อไม่ได้ส่งมา
+- `CsmjuAppShell` prop `user` ปกติไม่ต้องส่งอีกต่อไป
+- `CSMJU_STANDARDS_VERSION` เป็น `"1.3.0"` — เดินตามเวอร์ชันของ `csmju2030-standards` ไม่ใช่ของเอกสาร UI
+
+### template
+
+- เพิ่ม `frontend/src/app/auth/[csmju]/route.ts`
+- `.env.example` เพิ่ม `CSMJU_CLIENT_ID`, `CSMJU_APP_ORIGIN` (ฝั่ง server ห้ามขึ้นต้น `NEXT_PUBLIC_`)
 
 ---
 

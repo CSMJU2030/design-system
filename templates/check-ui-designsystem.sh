@@ -28,6 +28,8 @@
 #   DS-16  root layout ไม่มี "use client"
 #   DS-19  standards_version ตรงกับ .standards-version
 #   DS-20  ไม่เขียน refresh token logic เอง
+#   DS-21  ไม่เรียก /oauth/token ของ Core เอง (auth-contract §22)
+#   DS-22  มี route handler /auth ที่ใช้ createCsmjuAuthRoutes()
 #   (และทวนซ้ำ UI-01..04 / SEC-03 / SEC-05 / ARC-01 / ARC-03 ด้วยตัว parser ที่แม่นกว่า grep)
 #
 # เคารพ .compliance-exceptions.yml เหมือน check อื่นๆ
@@ -42,7 +44,7 @@ if ! command -v node >/dev/null 2>&1; then
 fi
 
 # pin เวอร์ชันไว้เพื่อให้ผลการตรวจคงที่ ไม่เปลี่ยนตามวันที่รัน
-DS_VERSION="${CSMJU_DESIGN_SYSTEM_VERSION:-1.2.0}"
+DS_VERSION="${CSMJU_DESIGN_SYSTEM_VERSION:-1.3.0}"
 
 if ! npx --yes "@csmju2030/design-system@${DS_VERSION}" csmju-ui-lint; then
   cat <<'MSG'

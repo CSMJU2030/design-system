@@ -243,6 +243,14 @@ const LINE_RULES = [
     hint: "CsmjuAppShell ดัก 401 แล้ว refresh + retry ให้แล้ว ระบบย่อยห้ามเขียนซ้ำ",
   },
   {
+    id: "DS-21",
+    severity: SEV.ERROR,
+    ref: "auth-contract.md §4/§19/§22 · ui-design-system.md §16.2 ข้อ 7",
+    test: (line) => /["'`][^"'`]*\/oauth\/(token|authorize)|grant_type\s*[:=]/.test(line),
+    message: "เรียก token endpoint ของ Core เอง",
+    hint: "ใช้ createCsmjuAuthRoutes() จาก @csmju2030/design-system/server เท่านั้น",
+  },
+  {
     id: "DD-04",
     severity: SEV.WARN,
     ref: "data-dictionary.md §3 (ตัวตรวจจริงคือ check-no-hardcoded-faculty.sh)",
@@ -322,7 +330,12 @@ function lintFile(absPath) {
 
     for (const rule of LINE_RULES) {
       // design system เองเป็นเจ้าของ token และเป็นคนเขียน 401 handling จึงได้รับยกเว้น 2 ข้อนี้
-      if (allowInternal && (rule.id === "UI-01" || rule.id === "UI-02" || rule.id === "DS-20")) continue;
+      if (
+        allowInternal &&
+        (rule.id === "UI-01" || rule.id === "UI-02" || rule.id === "DS-20" || rule.id === "DS-21")
+      ) {
+        continue;
+      }
       if (rule.test(line, { inReducedMotion })) {
         report(rule.severity, rule.id, file, no, rule.message, `${rule.hint}  [${rule.ref}]`);
       }
@@ -437,7 +450,47 @@ function checkAppRouter() {
   }
   for (const appDir of appDirs()) {
     checkRootLayout(appDir);
+    checkAuthRoutes(appDir);
     checkSegments(appDir, appDir);
+  }
+}
+
+/**
+ * DS-22 — ทุกระบบย่อยต้องมี route handler ของ OAuth flow
+ * ถ้าไม่มี: login ไม่ได้, refresh ไม่ได้, ผู้ใช้จะโดนเด้งออกทุกครั้งที่ reload
+ * auth-contract.md §3-§8, §18-§23
+ */
+function checkAuthRoutes(appDir) {
+  const authDir = join(appDir, "auth");
+  let found = null;
+
+  if (existsSync(authDir)) {
+    const stack = [authDir];
+    while (stack.length && !found) {
+      const dir = stack.pop();
+      for (const entry of readdirSync(dir)) {
+        const full = join(dir, entry);
+        if (statSync(full).isDirectory()) {
+          stack.push(full);
+        } else if (/^route\.(t|j)sx?$/.test(entry)) {
+          found = full;
+          break;
+        }
+      }
+    }
+  }
+
+  if (!found) {
+    report(SEV.ERROR, "DS-22", relative(ROOT, appDir), 0,
+      "ไม่พบ route handler ของ OAuth ที่ app/auth/[csmju]/route.ts",
+      'สร้างไฟล์เดียว: export const { GET, POST } = createCsmjuAuthRoutes()  [auth-contract.md §3-§8]');
+    return;
+  }
+
+  const rel = relative(ROOT, found);
+  if (!/createCsmjuAuthRoutes/.test(readFileSync(found, "utf8"))) {
+    report(SEV.ERROR, "DS-22", rel, 0, "route handler ของ /auth ไม่ได้ใช้ createCsmjuAuthRoutes()",
+      "ห้ามเขียน OAuth flow เอง — §22 ห้าม AIE ออกแบบ Refresh Flow เอง  [auth-contract.md §22]");
   }
 }
 
@@ -619,7 +672,7 @@ if (asJson) {
   console.log(JSON.stringify({ errors: errors.length, warnings: warnings.length, waived, findings: active }, null, 2));
 } else {
   const RED = "\x1b[31m", YEL = "\x1b[33m", DIM = "\x1b[2m", RST = "\x1b[0m", BLD = "\x1b[1m";
-  console.log(`\n${BLD}csmju-ui-lint${RST} ${DIM}— ชั้นหน้าจอของ CSMJU2030 (ui-design-system.md v1.2.0)${RST}\n`);
+  console.log(`\n${BLD}csmju-ui-lint${RST} ${DIM}— ชั้นหน้าจอของ CSMJU2030 (csmju2030-standards v1.3.0)${RST}\n`);
 
   const byFile = new Map();
   for (const f of active) {

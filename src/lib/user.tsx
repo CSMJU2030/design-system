@@ -8,6 +8,7 @@
  *    การบังคับสิทธิ์จริงอยู่ที่ NestJS ซึ่งอ่านจาก header X-User-Id / X-Layer1-Role ที่ gateway แนบมา
  */
 import { createContext, useContext, useMemo, type ReactNode } from "react";
+import type { CsmjuJwtClaims } from "./token-store";
 
 /** ค่ามาตรฐานของ layer1_role ตาม data-dictionary §2 */
 export type Layer1Role = "student" | "alumni" | "staff" | "admin";
@@ -23,13 +24,38 @@ export const LAYER1_ROLE_LABEL: Record<Layer1Role, string> = {
 export interface CsmjuUser {
   /** รหัสนักศึกษา/รหัสบุคลากร — data-dictionary เรียกฟิลด์นี้ว่า username ไม่ใช่ student_id */
   username: string;
-  full_name: string;
+  /**
+   * ชื่อ-นามสกุล — optional เพราะ auth-contract §10 กำหนดว่า JWT payload มีได้แค่
+   * sub, username, layer1_role, faculty, iat, exp เท่านั้น (ห้ามเพิ่ม field)
+   * ถ้าระบบย่อยมีชื่อจริงจาก API ของตัวเอง ให้ส่งเข้ามาทาง prop `user` ของ AppShell
+   * ถ้าไม่มี หน้าจอจะแสดง username แทน
+   */
+  full_name?: string | null;
   layer1_role: Layer1Role;
   /** บทบาทเฉพาะระบบย่อย มาจาก API ของระบบย่อยเอง (data-dictionary §2) */
   layer2_role?: string | null;
   faculty?: string | null;
   email?: string | null;
   avatar_url?: string | null;
+}
+
+/**
+ * แปลง JWT claims เป็น CsmjuUser — auth-contract §10/§11
+ * 🔴 ไม่ตรวจลายเซ็น ใช้เพื่อแสดงผลเท่านั้น การบังคับสิทธิ์จริงอยู่ที่ NestJS (SEC-04)
+ */
+export function userFromClaims(claims: CsmjuJwtClaims | null): CsmjuUser | null {
+  if (!claims?.username) return null;
+  const role = claims.layer1_role;
+  return {
+    username: claims.username,
+    // §12 layer1_role มีได้ 4 ค่าเท่านั้น — ถ้า Core ส่งค่านอกรายการ ถือว่าไม่รู้จัก ไม่เดาแทน
+    layer1_role: (["student", "alumni", "staff", "admin"] as const).includes(
+      role as Layer1Role,
+    )
+      ? (role as Layer1Role)
+      : "student",
+    faculty: claims.faculty ?? null,
+  };
 }
 
 export interface CsmjuUserContextValue {

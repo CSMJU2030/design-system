@@ -1,7 +1,7 @@
 # แผนกระจายงาน Design System ไปยัง AIE 37 คน
 
 **สำหรับ:** PM1 (Design System & Frontend Experience) และ PL ทุกทีม
-**สถานะ ณ วันที่เขียน:** 7 ก.ย. 2569 — package `@csmju2030/design-system@1.2.0` พร้อมใช้งานแล้ว
+**สถานะ ณ วันที่เขียน:** 7 ก.ย. 2569 — package `@csmju2030/design-system@1.3.0` พร้อมใช้งานแล้ว
 
 ---
 
@@ -93,13 +93,13 @@ PM1 (คุณ) — design system
 ## 3. ไทม์ไลน์ 6 สัปดาห์
 
 ### สัปดาห์ 0 — ก่อนเปิดตัว (คุณทำคนเดียว)
-- [x] `@csmju2030/design-system@1.2.0` — token + component 50 ตัว + utility
+- [x] `@csmju2030/design-system@1.3.0` — token + component 50 ตัว + utility
 - [x] `csmju-ui-lint` — กฎ `DS-01..20` + ทวน `UI/SEC/ARC` ทดสอบแล้วจับได้ 21 error กับโปรเจกต์ที่ผิด และเขียวกับ template
 - [x] `examples/subsystem-template/frontend` — pnpm + Tailwind v3 + `frontend/` ผ่าน `build` `lint` `typecheck` `csmju-ui-lint` จริง
 - [x] `templates/check-ui-designsystem.sh` — script สำหรับต่อเข้า CI กลาง
 - [x] เอกสาร: QUICKSTART · COMPONENTS · AI-PROMPT
 - [ ] 🔴 **ขอสิทธิ์ write บน `CSMJU2030/design-system`** — ตอนนี้บัญชีมีแค่สิทธิ์อ่าน จึง push ไม่ได้
-- [ ] **publish package ขึ้น GitHub Packages** (tag `v1.2.0` → workflow `release.yml` ทำให้เอง)
+- [ ] **publish package ขึ้น GitHub Packages** (tag `v1.3.0` → workflow `release.yml` ทำให้เอง)
 - [ ] ส่ง PR เข้า `csmju2030-standards`: เพิ่ม `scripts/check-ui-designsystem.sh` + step ใน job `ui-token-compliance` + bump `VERSION` เป็น 1.4.0
 - [ ] เสนอแก้ `ui-design-system.md` §16.1 ให้เป็น `frontend/`+`backend/` + pnpm (ตอนนี้เขียน `web/`+`api/` ซึ่งไม่ตรงกับ `new-subsystem.sh`)
 - [ ] เคาะข้อตกลงกับ PM2/PM3 (ข้อ 6)
@@ -203,18 +203,41 @@ sort -t: -k2 -rn audit.jsonl | head -10
 
 | # | ความเสี่ยง | สัญญาณเตือน | วิธีรับมือ |
 |---|---|---|---|
-| 1 | **สัญญากับ PM2/PM3 ยังไม่นิ่ง** แล้ว `useApi`/AppShell ผิดทั้ง 37 ระบบพร้อมกัน | ยังไม่มีเอกสาร `auth-contract.md` §6 และ `api-conventions.md` §4 เวอร์ชันสุดท้าย | 🔴 **เคาะ 3 ข้อนี้ให้จบก่อนสัปดาห์ 1:** (ก) endpoint refresh token ที่แน่นอน (ตอนนี้สมมติเป็น `POST {CORE}/api/v1/auth/refresh`) (ข) endpoint ข้อมูลผู้ใช้ (สมมติ `GET {API}/api/v1/me`) (ค) รูปร่าง `meta` ของ pagination (`total`, `total_pages`) — ทั้งหมดอยู่ที่เดียวใน package แก้ครั้งเดียวจบ แต่ต้องแก้ **ก่อน** คน 37 คนเริ่ม |
+| 1 | ~~สัญญากับ PM2/PM3 ยังไม่นิ่ง~~ **ปิดแล้วใน v1.3.0** | — | อ่าน `auth-contract.md` และ `api-conventions.md` ใน `csmju2030-standards` v1.3.0 แล้วพบว่าสัญญานิ่งครบทั้ง 3 ข้อ · package แก้ให้ตรงแล้ว (ดู §6.1 ข้างล่าง) · **สิ่งที่ยังต้องขอจาก PM2:** `client_id` ของแต่ละระบบย่อย (auth-contract §26) — 37 ค่า ต้องได้ก่อนใครจะ login ได้ |
 | 2 | AIE fork design system (copy component มาแก้ใน repo ตัวเอง) | มีโฟลเดอร์ `components/ui/` หรือไฟล์ชื่อ `Button.tsx` ในระบบย่อย | เพิ่มกฎใน `csmju-ui-lint` ให้ fail ทันทีเมื่อเจอ · แต่รากของปัญหาคือ SLA คำขอ component ช้า → **รักษา SLA 3 วันให้ได้จริง** |
 | 3 | คน 37 คนอัปเดตเวอร์ชันไม่พร้อมกัน | `standards_version` กระจายหลายค่า | `csmju-ui-lint` เตือนเมื่อตามหลัง > 1 minor และ fail เมื่อ > 1 major อยู่แล้ว · ออก **MINOR เท่านั้น** ในช่วง 6 สัปดาห์แรก ห้ามออก MAJOR |
 | 4 | AI ของแต่ละคนเขียนโค้ดที่ผ่าน lint แต่ UX แย่ (เช่น empty state ที่ไม่มีทางออก) | PL รีวิวแล้วรู้สึกแปลกแต่บอกไม่ถูก | G1 Wireframe คือด่านนี้ · และการตรวจด้วยตาข้อ 5.3 |
 | 5 | คุณกลายเป็นคอขวด | `#ds-help` เงียบ แต่ DM หาคุณเยอะ | บังคับกฎ "AIE ห้ามถาม PM ตรง" · ทุกคำถามที่ตอบใน DM ให้ **ย้ายไปตอบใน `#ds-help`** เพื่อให้คนที่ 2 ค้นเจอ |
+
+### 6.1 สิ่งที่แก้ไปแล้วใน v1.3.0 หลังอ่าน contract จริง
+
+ตอนเขียน v1.2.0 ยังไม่ได้อ่าน `csmju2030-standards/docs/` ทำให้เดาสัญญาไว้ผิด 3 จุด แก้แล้วดังนี้:
+
+| เรื่อง | v1.2.0 (เดาไว้ผิด) | v1.3.0 (ตาม contract จริง) |
+|---|---|---|
+| refresh token | `POST {CORE}/api/v1/auth/refresh` | `POST {CORE}/oauth/token` body `{grant_type:"refresh_token", refresh_token}` — auth-contract §19 |
+| ข้อมูลผู้ใช้ | `GET {API}/api/v1/me` | **ไม่มี endpoint นี้ในสัญญา** — อ่านจาก JWT claims (`sub`, `username`, `layer1_role`, `faculty`) auth-contract §10 |
+| การแนบ token | cookie + `credentials:"include"` | `Authorization: Bearer <access_token>` — auth-contract §7 ห้ามส่งทาง cookie |
+| `meta` pagination | `{ total, total_pages }` | `{ page, per_page, total }` — api-conventions §4 |
+
+**ผลที่ตามมาที่สำคัญที่สุด:** §7 บังคับ Bearer header แปลว่า JavaScript ต้องถือ access token ได้
+แต่ SEC-03 ห้ามเก็บ token ในที่ที่ JS อ่านได้ถาวร ทางออกเดียวที่ผ่านทั้งสองข้อคือ
+
+```
+access token   -> ตัวแปรใน memory (หายเมื่อ reload = ตั้งใจ)
+refresh token  -> httpOnly cookie ที่ route handler ฝั่ง Next.js ตั้งให้
+```
+
+จึงต้องมี route handler `/auth/*` ในทุกระบบย่อย ซึ่ง package เขียนให้แล้วทั้งหมด
+AIE เขียนแค่ไฟล์เดียว 2 บรรทัด (`createCsmjuAuthRoutes()`) และ `csmju-ui-lint` ข้อ **DS-22**
+จะ fail ถ้าลืมสร้าง ส่วน **DS-21** จะ fail ถ้าใครยิง `/oauth/token` เอง
 
 ---
 
 ## 7. เช็กลิสต์ของคุณ 7 วันข้างหน้า
 
 - [ ] 🔴 **ขอสิทธิ์ write บน `CSMJU2030/design-system`** — ต้องทำก่อนทุกข้อ ตอนนี้ push ไม่ได้
-- [ ] **publish package** — สร้าง release tag `v1.2.0` → workflow `release.yml` publish ขึ้น GitHub Packages ให้เอง
+- [ ] **publish package** — สร้าง release tag `v1.3.0` → workflow `release.yml` publish ขึ้น GitHub Packages ให้เอง
 - [ ] ทดสอบ `pnpm add @csmju2030/design-system` จากเครื่องอื่นที่ไม่ใช่เครื่องคุณ (ยืนยันว่า PAT + registry ใช้ได้จริง)
 - [ ] ส่ง PR เข้า `csmju2030-standards` (script + step + bump VERSION) — ถ้าไม่ทำข้อนี้ `DS-xx` จะเป็นแค่เครื่องมือที่ AIE ต้องรันเอง ไม่ใช่กฎที่บังคับได้
 - [ ] เคาะ 3 ข้อตกลงในความเสี่ยงข้อ 1 กับ PM2/PM3 — **ข้อนี้สำคัญที่สุด**

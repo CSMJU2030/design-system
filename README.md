@@ -7,7 +7,7 @@ UI Kit และ Design Token มาตรฐานกลางของโค�
 
 | | |
 |---|---|
-| **เวอร์ชัน** | `1.2.0` (เดินคู่กับ `docs/ui-design-system.md` v1.2.0) |
+| **เวอร์ชัน** | `1.3.0` — implement `csmju2030-standards` v1.3.0 (`auth-contract.md`, `api-conventions.md`, `data-dictionary.md`) |
 | **Stack ที่รองรับ** | Next.js App Router (15+) · React 19 · TypeScript · Tailwind CSS v3 (preset) / v4 (`@theme`) |
 | **คู่กับฝั่งหลังบ้าน** | NestJS (envelope `{success, data, meta}`) · PostgreSQL |
 | **Registry** | GitHub Packages (`npm.pkg.github.com`) |
@@ -83,7 +83,7 @@ pnpm --filter frontend lint:ui            # csmju-ui-lint — ชั้นหน
 | ชั้น | ใครตรวจ | รหัสกฎ |
 |---|---|---|
 | compliance gate กลาง (CI ที่แตะไม่ได้) | `csmju2030-standards/scripts/*.sh` | `GH-` `SEC-` `ARC-` `API-` `DD-` `UI-01..04` `QA-` |
-| ชั้นหน้าจอ (ตัวนี้) | `csmju-ui-lint` | `DS-01..20` + ทวนซ้ำ `UI-01..04` / `SEC-03` / `SEC-05` / `ARC-01` / `ARC-03` ด้วย parser ที่แม่นกว่า grep |
+| ชั้นหน้าจอ (ตัวนี้) | `csmju-ui-lint` | `DS-01..22` + ทวนซ้ำ `UI-01..04` / `SEC-03` / `SEC-05` / `ARC-01` / `ARC-03` ด้วย parser ที่แม่นกว่า grep |
 
 `DS-xx` ตรวจสิ่งที่ `grep` ทำไม่ได้ เช่น "ทุก route segment มี `loading.tsx` ไหม" ·
 "root layout ครอบด้วย `<CsmjuAppShell>` หรือยัง" · "`IconButton` มี `label` ไหม" ·

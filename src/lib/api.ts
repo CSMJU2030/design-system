@@ -9,6 +9,10 @@
  *   - ตั้ง timeout กันหน้าค้าง
  *
  * 🔴 ระบบย่อยห้ามเรียก fetch ตรงไปยัง API และห้ามต่อ PostgreSQL จากฝั่ง Next.js
+ *
+ * การแนบ token: auth-contract.md §7 บังคับให้ส่งผ่าน `Authorization: Bearer <access_token>`
+ * เท่านั้น และห้ามส่งผ่าน query string / request body / cookie ที่ Core ไม่ได้กำหนด
+ * ตัว access token อยู่ใน memory (ดู token-store.ts) ไม่ได้อยู่ใน cookie
  */
 import {
   CsmjuApiError,
@@ -18,6 +22,7 @@ import {
   type CsmjuSuccessEnvelope,
 } from "./errors";
 import { requestTokenRefresh } from "./auth-bridge";
+import { getAccessToken } from "./token-store";
 
 export interface CsmjuFetchOptions extends Omit<RequestInit, "body"> {
   /** body เป็น object ธรรมดา — จะ JSON.stringify ให้เอง (ถ้าเป็น FormData จะส่งดิบ) */
@@ -64,6 +69,7 @@ export async function csmjuFetchEnvelope<T>(
   const { body, query, timeoutMs = 20000, noRetry, headers, ...rest } = options;
 
   const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
+  const accessToken = getAccessToken();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -72,10 +78,11 @@ export async function csmjuFetchEnvelope<T>(
     response = await fetch(buildUrl(path, query), {
       ...rest,
       signal: options.signal ?? controller.signal,
-      // token อยู่ใน httpOnly cookie ที่ Core ออกให้ — ไม่มีการอ่าน/แนบ token เอง
-      credentials: "include",
+      // §7 ห้ามส่ง token ทาง cookie — API อยู่คนละ origin จึงไม่ต้องส่ง cookie ใด ๆ ไปด้วย
+      credentials: "same-origin",
       headers: {
         Accept: "application/json",
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
         ...(isFormData ? {} : body !== undefined ? { "Content-Type": "application/json" } : {}),
         ...(headers as Record<string, string> | undefined),
       },

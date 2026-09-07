@@ -25,7 +25,8 @@ import {
 import { ArrowLeft, Bell, ChevronDown, LogOut, Menu, UserCircle2 } from "lucide-react";
 import { cn } from "../../lib/cn";
 import { registerUnauthorizedHandler } from "../../lib/auth-bridge";
-import { CsmjuUserProvider, layer1RoleLabel, type CsmjuUser } from "../../lib/user";
+import { CsmjuUserProvider, layer1RoleLabel, userFromClaims, type CsmjuUser } from "../../lib/user";
+import { setAccessToken, clearAccessToken, getJwtClaims } from "../../lib/token-store";
 import { NavIcon } from "../../lib/icon-registry";
 import { ToastProvider } from "../feedback/Toast";
 import { Drawer } from "../feedback/Drawer";
@@ -55,8 +56,13 @@ export interface CsmjuAppShellProps {
 
   /**
    * ข้อมูลผู้ใช้ปัจจุบัน
-   * ปกติส่งมาจาก Server Component ที่อ่าน header X-User-Id ที่ gateway แนบมา (auth-contract §5)
-   * ถ้าไม่ส่ง AppShell จะเรียก `${NEXT_PUBLIC_API_BASE_URL}/api/v1/me` ให้เอง
+   *
+   * ปกติ "ไม่ต้องส่ง" — AppShell จะอ่านจาก JWT claims ที่ได้ตอน /auth/refresh ให้เอง
+   * (auth-contract §10 กำหนดว่า payload มีแค่ sub, username, layer1_role, faculty, iat, exp
+   *  และไม่มี endpoint /me ในสัญญา — ห้ามสร้างขึ้นเอง)
+   *
+   * ส่งมาเองเมื่อระบบย่อยมีชื่อ-นามสกุลหรือ layer2_role จาก API ของตัวเอง
+   * ซึ่งไม่ได้อยู่ใน JWT (§10 ห้ามเพิ่ม field ใน token)
    */
   user?: CsmjuUser | null;
 
@@ -81,12 +87,6 @@ function coreUrl(): string {
   return raw.replace(/\/+$/, "");
 }
 
-function apiBase(): string {
-  const raw =
-    (typeof process !== "undefined" ? process.env?.NEXT_PUBLIC_API_BASE_URL : undefined) ?? "";
-  return raw.replace(/\/+$/, "");
-}
-
 export function CsmjuAppShell({
   subsystemName,
   displayName,
@@ -106,28 +106,55 @@ export function CsmjuAppShell({
 
   const core = coreUrl();
 
-  /* ---------- §5.1 ดักจับ token หมดอายุ: refresh เงียบ -> ถ้าไม่สำเร็จ redirect ไป Core ---------- */
-  useEffect(() => {
-    return registerUnauthorizedHandler(async () => {
-      try {
-        const res = await fetch(`${core}/api/v1/auth/refresh`, {
-          method: "POST",
-          credentials: "include",
-        });
-        if (res.ok) return true;
-      } catch {
-        // ตกลงมาที่ redirect ด้านล่าง
+  /* ---------- §5.1 ดักจับ token หมดอายุ: refresh เงียบ -> ถ้าไม่สำเร็จ redirect ไป Core ----------
+   *
+   * ยิงไปที่ /auth/refresh ของตัวเอง (same-origin) ไม่ได้ยิงไป Core ตรง ๆ
+   * เพราะ auth-contract §19 ให้ส่ง refresh_token ใน body ซึ่ง JS ในเบราว์เซอร์ต้องอ่าน token ได้
+   * — ขัดกับ SEC-03 route handler จาก @csmju2030/design-system/server จึงเป็นคนถือ
+   * refresh_token ใน httpOnly cookie แล้วคุยกับ Core แทน (§22 ห้าม AIE ออกแบบ flow เอง)
+   */
+  const refresh = useCallback(async (): Promise<boolean> => {
+    try {
+      const res = await fetch("/auth/refresh", { method: "POST" });
+      if (res.ok) {
+        const body = await res.json().catch(() => null);
+        const token = body?.data?.access_token;
+        if (token) {
+          // §20 ข้อ 1-2 เก็บ token ใหม่แล้วใช้ตัวใหม่ทันที
+          setAccessToken(token, body?.data?.expires_in);
+          return true;
+        }
       }
-      // §9.3 ผู้ใช้ไม่ควรรู้ตัว — ไม่แสดงข้อความใดๆ แค่ส่งกลับไปหน้า login ของ Core
-      if (typeof window !== "undefined") {
-        const back = encodeURIComponent(window.location.href);
-        window.location.href = `${core}/login?redirect_uri=${back}`;
-      }
-      return false;
-    });
+    } catch {
+      // ตกลงมาที่ redirect ด้านล่าง
+    }
+    return false;
+  }, []);
+
+  const redirectToLogin = useCallback(() => {
+    // §21 refresh ไม่สำเร็จ -> กลับหน้า login ของ Core
+    // §23 ต้องไม่วนซ้ำ — ใช้ full page navigation จบรอบเดียว ไม่ retry อีก
+    clearAccessToken();
+    if (typeof window !== "undefined") {
+      const back = encodeURIComponent(window.location.href);
+      window.location.href = `${core}/login?redirect_uri=${back}`;
+    }
   }, [core]);
 
-  /* ---------- ดึงข้อมูลผู้ใช้เมื่อไม่ได้ส่งมาทาง prop ---------- */
+  useEffect(() => {
+    return registerUnauthorizedHandler(async () => {
+      const ok = await refresh();
+      // §9.3 ผู้ใช้ไม่ควรรู้ตัว — ไม่แสดงข้อความใดๆ แค่ส่งกลับไปหน้า login ของ Core
+      if (!ok) redirectToLogin();
+      return ok;
+    });
+  }, [refresh, redirectToLogin]);
+
+  /* ---------- ตั้ง session ตอนโหลดหน้า: ขอ access token ก้อนแรกแล้วอ่าน identity จาก JWT ----------
+   *
+   * access token อยู่ใน memory จึงหายทุกครั้งที่ reload — รอบแรกต้องขอใหม่เสมอ
+   * ข้อมูลผู้ใช้มาจาก claims ใน token ไม่ได้มาจาก endpoint /me (§10 ไม่มี endpoint นั้นในสัญญา)
+   */
   useEffect(() => {
     if (userProp !== undefined) {
       setUser(userProp);
@@ -136,15 +163,14 @@ export function CsmjuAppShell({
     }
     let alive = true;
     setUserLoading(true);
-    fetch(`${apiBase()}/api/v1/me`, { credentials: "include" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((body) => {
+    refresh()
+      .then((ok) => {
         if (!alive) return;
-        // รองรับทั้ง envelope มาตรฐานและ object ดิบ เผื่อ gateway ตอบตรง
-        setUser(body?.data ?? body ?? null);
-      })
-      .catch(() => {
-        if (alive) setUser(null);
+        if (!ok) {
+          redirectToLogin();
+          return;
+        }
+        setUser(userFromClaims(getJwtClaims()));
       })
       .finally(() => {
         if (alive) setUserLoading(false);
@@ -152,7 +178,7 @@ export function CsmjuAppShell({
     return () => {
       alive = false;
     };
-  }, [userProp]);
+  }, [userProp, refresh, redirectToLogin]);
 
   /* ---------- §5.1 Breadcrumb สร้างอัตโนมัติจาก route ---------- */
   const crumbs = useMemo<BreadcrumbItem[]>(() => {
@@ -316,22 +342,25 @@ function UserMenu({ user, coreBase }: { user: CsmjuUser | null; coreBase: string
     );
   }
 
+  // §10 JWT ไม่มีชื่อ-นามสกุล — ถ้าระบบย่อยไม่ได้ส่ง full_name มา ให้ใช้ username แทน
+  const displayName = user.full_name ?? user.username;
+
   return (
     <DropdownMenu
       trigger={(props) => (
         <button
           type="button"
           className="csmju-icon-btn"
-          aria-label={`เมนูของ ${user.full_name}`}
+          aria-label={`เมนูของ ${displayName}`}
           {...props}
         >
-          <Avatar name={user.full_name} src={user.avatar_url} size="sm" />
+          <Avatar name={displayName} src={user.avatar_url} size="sm" />
           <ChevronDown size={14} aria-hidden="true" />
         </button>
       )}
     >
       <div className="csmju-user-menu__identity">
-        <p className="csmju-user-menu__name">{user.full_name}</p>
+        <p className="csmju-user-menu__name">{displayName}</p>
         <p className="csmju-user-menu__meta">
           {user.username} · {layer1RoleLabel(user.layer1_role)}
         </p>
@@ -344,10 +373,19 @@ function UserMenu({ user, coreBase }: { user: CsmjuUser | null; coreBase: string
       <DropdownItem
         tone="danger"
         icon={<LogOut size={18} />}
-        onClick={() => {
-          if (typeof window !== "undefined") {
-            window.location.href = `${coreBase}/logout`;
+        onClick={async () => {
+          if (typeof window === "undefined") return;
+          // ล้าง refresh cookie ฝั่ง server ของเราก่อน แล้วค่อยส่งต่อให้ Core ปิด session กลาง
+          clearAccessToken();
+          let logoutUrl = `${coreBase}/logout`;
+          try {
+            const res = await fetch("/auth/logout", { method: "POST" });
+            const body = await res.json().catch(() => null);
+            if (body?.data?.logout_url) logoutUrl = body.data.logout_url;
+          } catch {
+            // ถึง route handler ไม่ตอบ ก็ยังต้องพาไป logout ที่ Core ให้ได้
           }
+          window.location.href = logoutUrl;
         }}
       >
         ออกจากระบบ
