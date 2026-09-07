@@ -94,15 +94,18 @@ PM1 (คุณ) — design system
 
 ### สัปดาห์ 0 — ก่อนเปิดตัว (คุณทำคนเดียว)
 - [x] `@csmju2030/design-system@1.3.0` — token + component 50 ตัว + utility
-- [x] `csmju-ui-lint` — กฎ `DS-01..20` + ทวน `UI/SEC/ARC` ทดสอบแล้วจับได้ 21 error กับโปรเจกต์ที่ผิด และเขียวกับ template
+- [x] `csmju-ui-lint` — กฎ `DS-01..22` + ทวน `UI/SEC/ARC` ทดสอบแล้วจับได้กับโปรเจกต์ที่ผิด และเขียวกับ template
 - [x] `examples/subsystem-template/frontend` — pnpm + Tailwind v3 + `frontend/` ผ่าน `build` `lint` `typecheck` `csmju-ui-lint` จริง
 - [x] `templates/check-ui-designsystem.sh` — script สำหรับต่อเข้า CI กลาง
 - [x] เอกสาร: QUICKSTART · COMPONENTS · AI-PROMPT
-- [ ] 🔴 **ขอสิทธิ์ write บน `CSMJU2030/design-system`** — ตอนนี้บัญชีมีแค่สิทธิ์อ่าน จึง push ไม่ได้
-- [ ] **publish package ขึ้น GitHub Packages** (tag `v1.3.0` → workflow `release.yml` ทำให้เอง)
-- [ ] ส่ง PR เข้า `csmju2030-standards`: เพิ่ม `scripts/check-ui-designsystem.sh` + step ใน job `ui-token-compliance` + bump `VERSION` เป็น 1.4.0
-- [ ] เสนอแก้ `ui-design-system.md` §16.1 ให้เป็น `frontend/`+`backend/` + pnpm (ตอนนี้เขียน `web/`+`api/` ซึ่งไม่ตรงกับ `new-subsystem.sh`)
-- [ ] เคาะข้อตกลงกับ PM2/PM3 (ข้อ 6)
+- [x] 🔴 ขอสิทธิ์ write บน `CSMJU2030/design-system` — ได้แล้ว (admin ทั้ง 4 repo)
+- [x] **publish package ขึ้น GitHub Packages** — tag `v1.3.0` แล้ว `release.yml` ทำให้เอง
+- [x] ส่ง PR เข้า `csmju2030-standards`: `scripts/check-ui-designsystem.sh` + step ใน job `ui-token-compliance` + `VERSION` 1.4.0
+      (branch `feature/design-system/ui-designsystem-check`)
+- [x] เสนอแก้ `ui-design-system.md` §16.1 ให้เป็น `frontend/`+`backend/` + pnpm — อยู่ใน PR เดียวกัน
+- [x] เคาะข้อตกลงกับ PM2/PM3 — พบว่าสัญญานิ่งอยู่แล้วใน `auth-contract.md` / `api-conventions.md`
+      package แก้ให้ตรงแล้วใน v1.3.0 (ดู §6.1)
+- [ ] 🔴 **ขอ `client_id` ของแต่ละระบบย่อยจาก PM2** — 37 ค่า ไม่มีค่านี้ระบบย่อย login ไม่ได้เลย (auth-contract §26)
 
 ### สัปดาห์ 1 — อบรม PL 10 คน (ไม่ใช่ 37 คน)
 | | |
@@ -236,11 +239,9 @@ AIE เขียนแค่ไฟล์เดียว 2 บรรทัด (`c
 
 ## 7. เช็กลิสต์ของคุณ 7 วันข้างหน้า
 
-- [ ] 🔴 **ขอสิทธิ์ write บน `CSMJU2030/design-system`** — ต้องทำก่อนทุกข้อ ตอนนี้ push ไม่ได้
-- [ ] **publish package** — สร้าง release tag `v1.3.0` → workflow `release.yml` publish ขึ้น GitHub Packages ให้เอง
+- [ ] 🔴 **ขอ `client_id` ของ 37 ระบบจาก PM2** — **ข้อนี้สำคัญที่สุดตอนนี้** ไม่มีค่านี้ไม่มีใคร login ได้
 - [ ] ทดสอบ `pnpm add @csmju2030/design-system` จากเครื่องอื่นที่ไม่ใช่เครื่องคุณ (ยืนยันว่า PAT + registry ใช้ได้จริง)
-- [ ] ส่ง PR เข้า `csmju2030-standards` (script + step + bump VERSION) — ถ้าไม่ทำข้อนี้ `DS-xx` จะเป็นแค่เครื่องมือที่ AIE ต้องรันเอง ไม่ใช่กฎที่บังคับได้
-- [ ] เคาะ 3 ข้อตกลงในความเสี่ยงข้อ 1 กับ PM2/PM3 — **ข้อนี้สำคัญที่สุด**
+- [ ] ตาม PR `feature/design-system/ui-designsystem-check` ใน `csmju2030-standards` ให้ merge — ถ้าไม่ merge `DS-xx` จะเป็นแค่เครื่องมือที่ AIE ต้องรันเอง ไม่ใช่กฎที่บังคับได้
 - [ ] ตั้งช่องทางสื่อสาร 5 ช่องในข้อ 4
 - [ ] นัดอบรม PL 10 คน (90 นาที) พร้อมส่ง QUICKSTART ให้อ่านล่วงหน้า
 - [ ] เตรียม slide จาก §0 (10 กฎเหล็ก) + §19.1 (วิเคราะห์ mockup เดิม) — 2 ส่วนนี้เป็นเนื้อพรีเซนต์ที่ดีที่สุดในเอกสาร
